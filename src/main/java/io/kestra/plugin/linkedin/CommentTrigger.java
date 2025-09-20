@@ -64,7 +64,7 @@ import java.util.Optional;
                     type: io.kestra.plugin.linkedin.CommentTrigger
                     accessToken: "{{ outputs.authenticate.accessToken }}"
                     postUrns:
-                      - "urn:li:ugcPost:7374025671234244609"
+                      - "urn:li:activity:7374025671234244609"
                     interval: PT30M
                 """
         ),
@@ -76,8 +76,8 @@ import java.util.Optional;
                     type: io.kestra.plugin.linkedin.CommentTrigger
                     accessToken: "{{ secret('LINKEDIN_ACCESS_TOKEN') }}"
                     postUrns:
-                      - "urn:li:ugcPost:7374025671234244609"
-                      - "urn:li:ugcPost:7374025671234244610"
+                      - "urn:li:activity:7374025671234244609"
+                      - "urn:li:activity:7374025671234244610"
                     interval: PT15M
                 """
         )
@@ -159,7 +159,7 @@ public class CommentTrigger extends AbstractTrigger implements PollingTriggerInt
                 String encodedUrn = URLEncoder.encode(postUrn, StandardCharsets.UTF_8);
                 String apiUrl = "https://api.linkedin.com/rest/socialActions/" + encodedUrn + "/comments";
 
-                GenericUrl url = new GenericUrl(apiUrl);
+                GenericUrl url = new GenericUrl(apiUrl,true);
                 HttpRequest request = requestFactory.buildGetRequest(url);
 
                 request.getHeaders().set("LinkedIn-Version", renderedLinkedinVersion);
