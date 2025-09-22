@@ -55,7 +55,7 @@ import java.util.*;
         )
     }
 )
-public class PostAnalytics extends AbstractLinkedinTask implements RunnableTask<PostAnalytics.Output> {
+public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTask<GetPostAnalytics.Output> {
 
     @Schema(
         title = "Activity URNs",

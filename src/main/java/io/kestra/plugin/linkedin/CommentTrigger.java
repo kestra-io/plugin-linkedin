@@ -14,6 +14,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.http.client.*;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -255,7 +256,7 @@ public class CommentTrigger extends AbstractTrigger implements PollingTriggerInt
     }
 
     private HttpRequestFactory createLinkedinHttpRequestFactory(String accessToken) throws Exception {
-        com.google.api.client.auth.oauth2.Credential credential = 
+        com.google.api.client.auth.oauth2.Credential credential =
             new com.google.api.client.auth.oauth2.Credential(
                 com.google.api.client.auth.oauth2.BearerToken.authorizationHeaderAccessMethod()
             );
