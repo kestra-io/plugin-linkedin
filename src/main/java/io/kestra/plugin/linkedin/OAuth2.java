@@ -1,21 +1,27 @@
 package io.kestra.plugin.linkedin;
 
-import com.google.api.client.auth.oauth2.*;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
+import io.kestra.core.serializers.JacksonMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.http.client.HttpClient;
+import io.kestra.core.http.client.configurations.HttpConfiguration;
+import io.kestra.core.http.HttpRequest;
+import io.kestra.core.http.HttpResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import java.io.IOException;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 
 @SuperBuilder
 @ToString
@@ -75,43 +81,78 @@ public class OAuth2 extends Task implements RunnableTask<OAuth2.Output> {
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        String renderedClientId = runContext.render(this.clientId).as(String.class).orElseThrow();
-        String renderedClientSecret = runContext.render(this.clientSecret).as(String.class).orElseThrow();
-        String renderedRefreshToken = runContext.render(this.refreshToken).as(String.class).orElseThrow();
-        String renderedTokenUrl = runContext.render(this.tokenUrl).as(String.class).orElse("https://www.linkedin.com/oauth/v2/accessToken");
+        String rClientId = runContext.render(this.clientId).as(String.class).orElseThrow();
+        String rClientSecret = runContext.render(this.clientSecret).as(String.class).orElseThrow();
+        String rRefreshToken = runContext.render(this.refreshToken).as(String.class).orElseThrow();
+        String rTokenUrl = runContext.render(this.tokenUrl).as(String.class).orElse("https://www.linkedin.com/oauth/v2/accessToken");
 
         try {
-            RefreshTokenRequest request = new RefreshTokenRequest(
-                new NetHttpTransport(),
-                new GsonFactory(),
-                new com.google.api.client.http.GenericUrl(renderedTokenUrl),
-                renderedRefreshToken
-            );
-
-            request.setClientAuthentication(
-                new com.google.api.client.auth.oauth2.ClientParametersAuthentication(
-                    renderedClientId,
-                    renderedClientSecret
-                )
-            );
-
-            request.setGrantType("refresh_token");
-
-            TokenResponse response = request.execute();
-
-            String accessToken = response.getAccessToken();
-            Long expiresIn = response.getExpiresInSeconds();
-            Instant expiresAt = expiresIn != null ? Instant.now().plusSeconds(expiresIn) : null;
-
-            return Output.builder()
-                .accessToken(accessToken)
-                .tokenType(response.getTokenType())
-                .expiresIn(expiresIn)
-                .scope(response.getScope())
-                .expiresAt(expiresAt)
+            // Create HTTP configuration
+            HttpConfiguration httpConfiguration = HttpConfiguration.builder()
                 .build();
 
-        } catch (IOException e) {
+            // Prepare form data for token refresh request
+            Map<String, Object> formData = new HashMap<>();
+            formData.put("grant_type", "refresh_token");
+            formData.put("refresh_token", rRefreshToken);
+            formData.put("client_id", rClientId);
+            formData.put("client_secret", rClientSecret);
+
+            // Build HTTP request with UrlEncodedRequestBody
+            HttpRequest request = HttpRequest.builder()
+                .uri(URI.create(rTokenUrl))
+                .method("POST")
+                .body(HttpRequest.UrlEncodedRequestBody.builder()
+                    .charset(StandardCharsets.UTF_8)
+                    .content(formData)
+                    .build())
+                .addHeader("Accept", "application/json")
+                .build();
+
+            try (HttpClient httpClient = HttpClient.builder()
+                .runContext(runContext)
+                .configuration(httpConfiguration)
+                .build()) {
+
+                HttpResponse<String> response = httpClient.request(request, String.class);
+                String responseBody = response.getBody();
+
+                if (response.getStatus().getCode() >= 400) {
+                    runContext.logger().error("OAuth2 token refresh failed with status: {} - {}", 
+                        response.getStatus().getCode(), responseBody);
+                    throw new RuntimeException("LinkedIn OAuth2 authentication failed with status: " + 
+                        response.getStatus().getCode() + " - " + responseBody);
+                }
+
+               JsonNode jsonResponse =JacksonMapper.ofJson().readTree(responseBody);
+
+                String accessToken = jsonResponse.has("access_token") ? 
+                    jsonResponse.get("access_token").asText() : null;
+                String tokenType = jsonResponse.has("token_type") ? 
+                    jsonResponse.get("token_type").asText() : "Bearer";
+                Long expiresIn = jsonResponse.has("expires_in") ? 
+                    jsonResponse.get("expires_in").asLong() : null;
+                String scope = jsonResponse.has("scope") ? 
+                    jsonResponse.get("scope").asText() : null;
+
+                if (accessToken == null) {
+                    throw new RuntimeException("No access token received in OAuth2 response");
+                }
+
+                Instant expiresAt = expiresIn != null ? Instant.now().plusSeconds(expiresIn) : null;
+
+                runContext.logger().info("Successfully refreshed LinkedIn OAuth2 token, expires in {} seconds", expiresIn);
+
+                return Output.builder()
+                    .accessToken(accessToken)
+                    .tokenType(tokenType)
+                    .expiresIn(expiresIn)
+                    .scope(scope)
+                    .expiresAt(expiresAt)
+                    .build();
+            }
+
+        } catch (Exception e) {
             runContext.logger().error("Failed to refresh LinkedIn OAuth2 token", e);
             throw new RuntimeException("LinkedIn OAuth2 authentication failed: " + e.getMessage(), e);
         }

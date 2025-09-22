@@ -1,24 +1,21 @@
 package io.kestra.plugin.linkedin;
 
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.GenericUrl;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
+import io.kestra.core.serializers.JacksonMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.http.client.HttpClient;
+import io.kestra.core.http.HttpRequest;
+import io.kestra.core.http.HttpResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -66,27 +63,27 @@ public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTa
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        HttpRequestFactory requestFactory = createLinkedinHttpRequestFactory(runContext);
         List<String> rActivityUrns = runContext.render(this.activityUrns).asList(String.class);
         List<PostReactionsData> results = new ArrayList<>();
-        Gson gson = new Gson();
 
+        try(HttpClient httpClient = createLinkedinHttpRequestFactory(runContext)) {
         for (String activityUrn : rActivityUrns) {
-            try {
+                try{
                 String encodedUrn = URLEncoder.encode(activityUrn, StandardCharsets.UTF_8);
-               
-                String finalUrl = "https://api.linkedin.com/rest/reactions/(entity:" + encodedUrn + ")?q=entity&sort=(value:REVERSE_CHRONOLOGICAL)";
-                GenericUrl url = new GenericUrl(finalUrl,true);
 
-                HttpRequest request = requestFactory.buildGetRequest(url);
+                String finalUrl = getLinkedinApiBaseUrl(runContext)+"/reactions/(entity:" + encodedUrn + ")?q=entity&sort=(value:REVERSE_CHRONOLOGICAL)";
 
-                request.getHeaders().set("LinkedIn-Version", "202509");
-                request.getHeaders().set("X-Restli-Protocol-Version", "2.0.0");
+                HttpRequest request = HttpRequest.builder()
+                .uri(URI.create(finalUrl))
+                .method("GET")
+                .addHeader("LinkedIn-Version", "202509")
+                .addHeader("X-Restli-Protocol-Version", "2.0.0")
+                .build();
+                HttpResponse<String> response = httpClient.request(request,String.class);
 
-                HttpResponse response = request.execute();
-                String responseBody = response.parseAsString();
+                String responseBody = response.getBody();
 
-                JsonObject jsonResponse = gson.fromJson(responseBody, JsonObject.class);
+                JsonNode jsonResponse = JacksonMapper.ofJson().readTree(responseBody);
                 PostReactionsData postData = parsePostReactions(activityUrn, jsonResponse);
                 results.add(postData);
 
@@ -101,7 +98,7 @@ public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTa
                 throw new RuntimeException("Failed to retrieve reactions for: " + activityUrn, e);
             }
         }
-
+    }
         return Output.builder()
             .posts(results)
             .totalPosts(results.size())
@@ -109,16 +106,15 @@ public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTa
             .build();
     }
 
-    private PostReactionsData parsePostReactions(String activityUrn, JsonObject jsonResponse) {
+    private PostReactionsData parsePostReactions(String activityUrn, JsonNode jsonResponse) {
         List<ReactionData> reactions = new ArrayList<>();
         Map<String, Integer> reactionsSummary = new HashMap<>();
         int totalReactions = 0;
 
         if (jsonResponse.has("elements")) {
-            JsonArray elements = jsonResponse.getAsJsonArray("elements");
-            for (JsonElement element : elements) {
-                JsonObject reactionObj = element.getAsJsonObject();
-                ReactionData reaction = parseReactionElement(reactionObj);
+            JsonNode elements = jsonResponse.get("elements");
+            for (JsonNode element : elements) {
+                ReactionData reaction = parseReactionElement(element);
                 reactions.add(reaction);
 
                 String reactionType = reaction.getReactionType();
@@ -129,8 +125,8 @@ public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTa
         }
 
         if (jsonResponse.has("paging")) {
-            JsonObject paging = jsonResponse.getAsJsonObject("paging");
-            totalReactions = paging.has("total") ? paging.get("total").getAsInt() : reactions.size();
+            JsonNode paging = jsonResponse.get("paging");
+            totalReactions = paging.has("total") ? paging.get("total").asInt() : reactions.size();
         } else {
             totalReactions = reactions.size();
         }
@@ -143,23 +139,23 @@ public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTa
             .build();
     }
 
-    private ReactionData parseReactionElement(JsonObject reactionObj) {
+    private ReactionData parseReactionElement(JsonNode reactionObj) {
         ReactionData.ReactionDataBuilder builder = ReactionData.builder();
 
-        if (reactionObj.has("id")) builder.reactionId(reactionObj.get("id").getAsString());
-        if (reactionObj.has("reactionType")) builder.reactionType(reactionObj.get("reactionType").getAsString());
-        if (reactionObj.has("root")) builder.rootUrn(reactionObj.get("root").getAsString());
+        if (reactionObj.has("id")) builder.reactionId(reactionObj.get("id").asText());
+        if (reactionObj.has("reactionType")) builder.reactionType(reactionObj.get("reactionType").asText());
+        if (reactionObj.has("root")) builder.rootUrn(reactionObj.get("root").asText());
 
         if (reactionObj.has("created")) {
-            JsonObject created = reactionObj.getAsJsonObject("created");
-            if (created.has("actor")) builder.actorUrn(created.get("actor").getAsString());
-            if (created.has("time")) builder.createdTime(created.get("time").getAsLong());
-            if (created.has("impersonator")) builder.impersonatorUrn(created.get("impersonator").getAsString());
+            JsonNode created = reactionObj.get("created");
+            if (created.has("actor")) builder.actorUrn(created.get("actor").asText());
+            if (created.has("time")) builder.createdTime(created.get("time").asLong());
+            if (created.has("impersonator")) builder.impersonatorUrn(created.get("impersonator").asText());
         }
 
         if (reactionObj.has("lastModified")) {
-            JsonObject lastModified = reactionObj.getAsJsonObject("lastModified");
-            if (lastModified.has("time")) builder.lastModifiedTime(lastModified.get("time").getAsLong());
+            JsonNode lastModified = reactionObj.get("lastModified");
+            if (lastModified.has("time")) builder.lastModifiedTime(lastModified.get("time").asLong());
         }
 
         return builder.build();

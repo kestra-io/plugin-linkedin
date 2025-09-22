@@ -1,20 +1,18 @@
 package io.kestra.plugin.linkedin;
 
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.GenericUrl;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
+import io.kestra.core.serializers.JacksonMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.http.client.*;
+import io.kestra.core.http.client.HttpClient;
+import io.kestra.core.http.client.configurations.BearerAuthConfiguration;
+import io.kestra.core.http.client.configurations.HttpConfiguration;
+import io.kestra.core.http.HttpResponse;
+import io.kestra.core.http.HttpRequest;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -22,6 +20,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -134,18 +133,15 @@ public class CommentTrigger extends AbstractTrigger implements PollingTriggerInt
         List<String> rPostUrns = runContext.render(this.postUrns).asList(String.class);
         String rLinkedinVersion = runContext.render(this.linkedinVersion).as(String.class).orElse("202509");
 
-        HttpRequestFactory requestFactory = createLinkedinHttpRequestFactory(rAccessToken);
-
+        HttpConfiguration httpConfiguration = HttpConfiguration.builder()
+            .auth(BearerAuthConfiguration.builder()
+                .token(Property.ofValue(rAccessToken))
+                .build())
+            .build();
         List<String> postsToMonitor = new ArrayList<>();
-        if (this.postUrns != null) {
-            postsToMonitor.addAll(rPostUrns);
-        }
-
-        if (postsToMonitor.isEmpty()) {
-            runContext.logger().warn("No post URNs provided to monitor");
-            return Optional.empty();
-        }
-
+ 
+        postsToMonitor.addAll(rPostUrns);
+        
         runContext.logger().info("Checking for new comments on {} posts", postsToMonitor.size());
 
         Instant lastCheckTime = context.getNextExecutionDate() != null
@@ -153,30 +149,32 @@ public class CommentTrigger extends AbstractTrigger implements PollingTriggerInt
             : Instant.now().minus(this.interval);
 
         List<CommentData> newComments = new ArrayList<>();
-        Gson gson = new Gson();
 
-        try {
+        try (HttpClient httpClient = HttpClient.builder()
+            .runContext(runContext)
+            .configuration(httpConfiguration)
+            .build()){
             for (String postUrn : postsToMonitor) {
                 String encodedUrn = URLEncoder.encode(postUrn, StandardCharsets.UTF_8);
                 String apiUrl = "https://api.linkedin.com/rest/socialActions/" + encodedUrn + "/comments";
 
-                GenericUrl url = new GenericUrl(apiUrl,true);
-                HttpRequest request = requestFactory.buildGetRequest(url);
+                HttpRequest request = HttpRequest.builder()
+                    .uri(URI.create(apiUrl))
+                    .method("GET")
+                    .addHeader("LinkedIn-Version", rLinkedinVersion)
+                    .addHeader("X-Restli-Protocol-Version", "2.0.0")
+                    .build();
 
-                request.getHeaders().set("LinkedIn-Version", rLinkedinVersion);
-                request.getHeaders().set("X-Restli-Protocol-Version", "2.0.0");
+                HttpResponse<String> response = httpClient.request(request,String.class);
+                String responseBody = response.getBody();
 
-                HttpResponse response = request.execute();
-                String responseBody = response.parseAsString();
-
-                JsonObject jsonResponse = gson.fromJson(responseBody, JsonObject.class);
+                JsonNode jsonResponse = JacksonMapper.ofIon().readTree(responseBody);
 
                 if (jsonResponse.has("elements")) {
-                    JsonArray elements = jsonResponse.getAsJsonArray("elements");
+                    JsonNode elements = jsonResponse.get("elements");
 
-                    for (JsonElement element : elements) {
-                        JsonObject commentObj = element.getAsJsonObject();
-                        CommentData comment = parseCommentData(postUrn, commentObj, lastCheckTime);
+                    for (JsonNode element : elements) {
+                        CommentData comment = parseCommentData(postUrn, element, lastCheckTime);
 
                         if (comment != null) {
                             newComments.add(comment);
@@ -218,17 +216,17 @@ public class CommentTrigger extends AbstractTrigger implements PollingTriggerInt
         }
     }
 
-    private CommentData parseCommentData(String postUrn, JsonObject commentObj, Instant lastCheckTime) {
+    private CommentData parseCommentData(String postUrn, JsonNode commentObj, Instant lastCheckTime) {
         if (!commentObj.has("created") || !commentObj.has("message")) {
             return null;
         }
 
-        JsonObject created = commentObj.getAsJsonObject("created");
+        JsonNode created = commentObj.get("created");
         if (!created.has("time")) {
             return null;
         }
 
-        long createdTimeMs = created.get("time").getAsLong();
+        long createdTimeMs = created.get("time").asLong();
         Instant createdTime = Instant.ofEpochMilli(createdTimeMs);
 
         // Only include comments created after the last check
@@ -236,13 +234,12 @@ public class CommentTrigger extends AbstractTrigger implements PollingTriggerInt
             return null;
         }
 
-        JsonObject message = commentObj.getAsJsonObject("message");
-        String commentText = message.has("text") ? message.get("text").getAsString() : "";
-
-        String commentId = commentObj.has("id") ? commentObj.get("id").getAsString() : null;
-        String commentUrn = commentObj.has("commentUrn") ? commentObj.get("commentUrn").getAsString() : null;
-        String actorUrn = commentObj.has("actor") ? commentObj.get("actor").getAsString() : null;
-        String agentUrn = commentObj.has("agent") ? commentObj.get("agent").getAsString() : null;
+        JsonNode message = commentObj.get("message");
+        String commentText = message.has("text") ? message.get("text").asText() : "";
+        String commentId = commentObj.has("id") ? commentObj.get("id").asText() : null;
+        String commentUrn = commentObj.has("commentUrn") ? commentObj.get("commentUrn").asText() : null;
+        String actorUrn = commentObj.has("actor") ? commentObj.get("actor").asText() : null;
+        String agentUrn = commentObj.has("agent") ? commentObj.get("agent").asText() : null;
 
         return CommentData.builder()
             .postUrn(postUrn)
@@ -255,15 +252,6 @@ public class CommentTrigger extends AbstractTrigger implements PollingTriggerInt
             .build();
     }
 
-    private HttpRequestFactory createLinkedinHttpRequestFactory(String accessToken) throws Exception {
-        com.google.api.client.auth.oauth2.Credential credential =
-            new com.google.api.client.auth.oauth2.Credential(
-                com.google.api.client.auth.oauth2.BearerToken.authorizationHeaderAccessMethod()
-            );
-        credential.setAccessToken(accessToken);
-
-        return new com.google.api.client.http.javanet.NetHttpTransport().createRequestFactory(credential);
-    }
 
     @Builder
     @Getter

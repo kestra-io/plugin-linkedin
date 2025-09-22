@@ -1,13 +1,10 @@
 package io.kestra.plugin.linkedin;
 
-import com.google.api.client.auth.oauth2.BearerToken;
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.client.http.HttpRequestFactory;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.http.client.*;
+import io.kestra.core.http.client.configurations.*;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -41,17 +38,21 @@ public class AbstractLinkedinTask extends Task {
     @Builder.Default
     protected Property<String> apiVersion = Property.ofValue("202509");
 
-    protected HttpRequestFactory createLinkedinHttpRequestFactory(RunContext runContext) throws Exception {
+    protected HttpClient createLinkedinHttpRequestFactory(RunContext runContext) throws Exception {
         String rAccessToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
 
-        Credential credential = new Credential(BearerToken.authorizationHeaderAccessMethod());
-        credential.setAccessToken(rAccessToken);
-
-        return new NetHttpTransport().createRequestFactory(credential);
+       HttpConfiguration httpConfiguration = HttpConfiguration.builder()
+       .auth(BearerAuthConfiguration.builder()
+       .token(Property.ofValue(rAccessToken))
+        .build())
+        .build();
+        return HttpClient.builder()
+               .runContext(runContext)
+               .configuration(httpConfiguration)
+               .build();
     }
 
     protected String getLinkedinApiBaseUrl(RunContext runContext) throws Exception {
-        String rApiVersion = runContext.render(this.apiVersion).as(String.class).orElse("202509");
         return "https://api.linkedin.com/rest";
     }
 }
