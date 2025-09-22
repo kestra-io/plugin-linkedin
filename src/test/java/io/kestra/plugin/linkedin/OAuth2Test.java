@@ -15,10 +15,10 @@ class OAuth2Test {
     @Test
     void shouldBuildTask() {
         OAuth2 task = OAuth2.builder()
-            .clientId(Property.ofValue("test-client-id"))
-            .clientSecret(Property.ofValue("test-client-secret"))
-            .refreshToken(Property.ofValue("test-refresh-token"))
-            .build();
+                .clientId(Property.ofValue("test-client-id"))
+                .clientSecret(Property.ofValue("test-client-secret"))
+                .refreshToken(Property.ofValue("test-refresh-token"))
+                .build();
 
         assertThat(task.getClientId(), is(notNullValue()));
         assertThat(task.getClientSecret(), is(notNullValue()));
@@ -32,12 +32,12 @@ class OAuth2Test {
         Long expiresIn = 3600L;
 
         OAuth2.Output output = OAuth2.Output.builder()
-            .accessToken("test-access-token-123")
-            .tokenType("Bearer")
-            .expiresIn(expiresIn)
-            .scope("r_liteprofile r_emailaddress w_member_social")
-            .expiresAt(now.plusSeconds(expiresIn))
-            .build();
+                .accessToken("test-access-token-123")
+                .tokenType("Bearer")
+                .expiresIn(expiresIn)
+                .scope("r_liteprofile r_emailaddress w_member_social")
+                .expiresAt(now.plusSeconds(expiresIn))
+                .build();
 
         assertThat(output.getAccessToken(), is("test-access-token-123"));
         assertThat(output.getTokenType(), is("Bearer"));
@@ -50,12 +50,12 @@ class OAuth2Test {
     @Test
     void shouldTestOutputWithNullValues() {
         OAuth2.Output output = OAuth2.Output.builder()
-            .accessToken("test-access-token-123")
-            .tokenType("Bearer")
-            .expiresIn(null)
-            .scope(null)
-            .expiresAt(null)
-            .build();
+                .accessToken("test-access-token-123")
+                .tokenType("Bearer")
+                .expiresIn(null)
+                .scope(null)
+                .expiresAt(null)
+                .build();
 
         assertThat(output.getAccessToken(), is("test-access-token-123"));
         assertThat(output.getTokenType(), is("Bearer"));
@@ -67,10 +67,10 @@ class OAuth2Test {
     @Test
     void shouldTestRequiredFields() {
         OAuth2 task = OAuth2.builder()
-            .clientId(Property.ofValue("test-client-id"))
-            .clientSecret(Property.ofValue("test-client-secret"))
-            .refreshToken(Property.ofValue("test-refresh-token"))
-            .build();
+                .clientId(Property.ofValue("test-client-id"))
+                .clientSecret(Property.ofValue("test-client-secret"))
+                .refreshToken(Property.ofValue("test-refresh-token"))
+                .build();
 
         assertThat(task.getClientId(), is(notNullValue()));
         assertThat(task.getClientSecret(), is(notNullValue()));
@@ -80,8 +80,8 @@ class OAuth2Test {
     @Test
     void shouldTestMinimalOutput() {
         OAuth2.Output output = OAuth2.Output.builder()
-            .accessToken("minimal-token")
-            .build();
+                .accessToken("minimal-token")
+                .build();
 
         assertThat(output.getAccessToken(), is("minimal-token"));
         assertThat(output.getTokenType(), is(nullValue()));

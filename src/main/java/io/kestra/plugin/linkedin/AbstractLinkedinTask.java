@@ -17,39 +17,30 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class AbstractLinkedinTask extends Task {
 
-    @Schema(
-        title = "Access Token",
-        description = "The OAuth2 access token for LinkedIn API authentication"
-    )
+    @Schema(title = "Access Token", description = "The OAuth2 access token for LinkedIn API authentication")
     @NotNull
     protected Property<String> accessToken;
 
-    @Schema(
-        title = "Application Name",
-        description = "Name of the application making the request"
-    )
+    @Schema(title = "Application Name", description = "Name of the application making the request")
     @Builder.Default
     protected Property<String> applicationName = Property.ofValue("kestra-linkedin-plugin");
 
-    @Schema(
-        title = "LinkedIn API Version",
-        description = "LinkedIn API version to use"
-    )
+    @Schema(title = "LinkedIn API Version", description = "LinkedIn API version to use")
     @Builder.Default
     protected Property<String> apiVersion = Property.ofValue("202509");
 
     protected HttpClient createLinkedinHttpRequestFactory(RunContext runContext) throws Exception {
         String rAccessToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
 
-       HttpConfiguration httpConfiguration = HttpConfiguration.builder()
-       .auth(BearerAuthConfiguration.builder()
-       .token(Property.ofValue(rAccessToken))
-        .build())
-        .build();
+        HttpConfiguration httpConfiguration = HttpConfiguration.builder()
+                .auth(BearerAuthConfiguration.builder()
+                        .token(Property.ofValue(rAccessToken))
+                        .build())
+                .build();
         return HttpClient.builder()
-               .runContext(runContext)
-               .configuration(httpConfiguration)
-               .build();
+                .runContext(runContext)
+                .configuration(httpConfiguration)
+                .build();
     }
 
     protected String getLinkedinApiBaseUrl(RunContext runContext) throws Exception {

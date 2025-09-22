@@ -18,9 +18,9 @@ class GetPostAnalyticsTest {
     @Test
     void shouldBuildTask() throws Exception {
         GetPostAnalytics task = GetPostAnalytics.builder()
-            .accessToken(Property.ofValue("test-access-token"))
-            .activityUrns(Property.ofValue(List.of("urn:li:activity:1234567890")))
-            .build();
+                .accessToken(Property.ofValue("test-access-token"))
+                .activityUrns(Property.ofValue(List.of("urn:li:activity:1234567890")))
+                .build();
 
         assertThat(task.getAccessToken(), is(notNullValue()));
         assertThat(task.getActivityUrns(), is(notNullValue()));
@@ -29,14 +29,14 @@ class GetPostAnalyticsTest {
     @Test
     void shouldTestReactionDataClass() {
         GetPostAnalytics.ReactionData reactionData = GetPostAnalytics.ReactionData.builder()
-            .reactionId("reaction123")
-            .reactionType("LIKE")
-            .actorUrn("urn:li:person:actor123")
-            .rootUrn("urn:li:activity:1234567890")
-            .createdTime(1640995200000L)
-            .lastModifiedTime(1640995300000L)
-            .impersonatorUrn("urn:li:organization:impersonator456")
-            .build();
+                .reactionId("reaction123")
+                .reactionType("LIKE")
+                .actorUrn("urn:li:person:actor123")
+                .rootUrn("urn:li:activity:1234567890")
+                .createdTime(1640995200000L)
+                .lastModifiedTime(1640995300000L)
+                .impersonatorUrn("urn:li:organization:impersonator456")
+                .build();
 
         assertThat(reactionData.getReactionId(), is("reaction123"));
         assertThat(reactionData.getReactionType(), is("LIKE"));
@@ -50,12 +50,12 @@ class GetPostAnalyticsTest {
     @Test
     void shouldTestPostReactionsDataWithError() {
         GetPostAnalytics.PostReactionsData postData = GetPostAnalytics.PostReactionsData.builder()
-            .activityUrn("urn:li:activity:1234567890")
-            .totalReactions(0)
-            .reactions(new ArrayList<>())
-            .reactionsSummary(new HashMap<>())
-            .error("Failed: API rate limit exceeded")
-            .build();
+                .activityUrn("urn:li:activity:1234567890")
+                .totalReactions(0)
+                .reactions(new ArrayList<>())
+                .reactionsSummary(new HashMap<>())
+                .error("Failed: API rate limit exceeded")
+                .build();
 
         assertThat(postData.getActivityUrn(), is("urn:li:activity:1234567890"));
         assertThat(postData.getTotalReactions(), is(0));
@@ -68,41 +68,40 @@ class GetPostAnalyticsTest {
     void shouldTestOutputClass() {
         List<GetPostAnalytics.PostReactionsData> posts = new ArrayList<>();
         posts.add(GetPostAnalytics.PostReactionsData.builder()
-            .activityUrn("urn:li:activity:1234567890")
-            .totalReactions(5)
-            .reactions(new ArrayList<>())
-            .reactionsSummary(Map.of("LIKE", 3, "PRAISE", 2))
-            .build());
+                .activityUrn("urn:li:activity:1234567890")
+                .totalReactions(5)
+                .reactions(new ArrayList<>())
+                .reactionsSummary(Map.of("LIKE", 3, "PRAISE", 2))
+                .build());
         posts.add(GetPostAnalytics.PostReactionsData.builder()
-            .activityUrn("urn:li:activity:0987654321")
-            .totalReactions(3)
-            .reactions(new ArrayList<>())
-            .reactionsSummary(Map.of("LIKE", 2, "EMPATHY", 1))
-            .build());
+                .activityUrn("urn:li:activity:0987654321")
+                .totalReactions(3)
+                .reactions(new ArrayList<>())
+                .reactionsSummary(Map.of("LIKE", 2, "EMPATHY", 1))
+                .build());
 
         GetPostAnalytics.Output output = GetPostAnalytics.Output.builder()
-            .posts(posts)
-            .totalPosts(2)
-            .totalReactions(8)
-            .build();
+                .posts(posts)
+                .totalPosts(2)
+                .totalReactions(8)
+                .build();
 
         assertThat(output.getPosts(), hasSize(2));
         assertThat(output.getTotalPosts(), is(2));
         assertThat(output.getTotalReactions(), is(8));
     }
 
-
     @Test
     void shouldTestReactionDataWithNullValues() {
         GetPostAnalytics.ReactionData reactionData = GetPostAnalytics.ReactionData.builder()
-            .reactionId("reaction123")
-            .reactionType(null)
-            .actorUrn(null)
-            .rootUrn(null)
-            .createdTime(null)
-            .lastModifiedTime(null)
-            .impersonatorUrn(null)
-            .build();
+                .reactionId("reaction123")
+                .reactionType(null)
+                .actorUrn(null)
+                .rootUrn(null)
+                .createdTime(null)
+                .lastModifiedTime(null)
+                .impersonatorUrn(null)
+                .build();
 
         assertThat(reactionData.getReactionId(), is("reaction123"));
         assertThat(reactionData.getReactionType(), is(nullValue()));
@@ -116,11 +115,11 @@ class GetPostAnalyticsTest {
     @Test
     void shouldTestEmptyReactionsScenario() {
         GetPostAnalytics.PostReactionsData postData = GetPostAnalytics.PostReactionsData.builder()
-            .activityUrn("urn:li:activity:1234567890")
-            .totalReactions(0)
-            .reactions(new ArrayList<>())
-            .reactionsSummary(new HashMap<>())
-            .build();
+                .activityUrn("urn:li:activity:1234567890")
+                .totalReactions(0)
+                .reactions(new ArrayList<>())
+                .reactionsSummary(new HashMap<>())
+                .build();
 
         assertThat(postData.getActivityUrn(), is("urn:li:activity:1234567890"));
         assertThat(postData.getTotalReactions(), is(0));

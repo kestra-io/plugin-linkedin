@@ -34,16 +34,9 @@ import java.util.Optional;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@Schema(
-    title = "Trigger on new LinkedIn comments",
-    description = "Monitors LinkedIn posts for new comments and triggers executions when found."
-)
-@Plugin(
-    examples = {
-        @Example(
-            title = "Monitor post for new comments",
-            full = true,
-            code = """
+@Schema(title = "Trigger on new LinkedIn comments", description = "Monitors LinkedIn posts for new comments and triggers executions when found.")
+@Plugin(examples = {
+        @Example(title = "Monitor post for new comments", full = true, code = """
                 id: linkedin_comment_monitor
                 namespace: company.team
                 tasks:
@@ -66,11 +59,8 @@ import java.util.Optional;
                     postUrns:
                       - "urn:li:activity:7374025671234244609"
                     interval: PT30M
-                """
-        ),
-        @Example(
-            title = "Monitor multiple posts for comments",
-            code = """
+                """),
+        @Example(title = "Monitor multiple posts for comments", code = """
                 triggers:
                   - id: multi_post_comments
                     type: io.kestra.plugin.linkedin.CommentTrigger
@@ -79,45 +69,29 @@ import java.util.Optional;
                       - "urn:li:activity:7374025671234244609"
                       - "urn:li:activity:7374025671234244610"
                     interval: PT15M
-                """
-        )
-    }
-)
-public class CommentTrigger extends AbstractTrigger implements PollingTriggerInterface, TriggerOutput<CommentTrigger.Output> {
+                """)
+})
+public class CommentTrigger extends AbstractTrigger
+        implements PollingTriggerInterface, TriggerOutput<CommentTrigger.Output> {
 
-    @Schema(
-        title = "Access Token",
-        description = "The OAuth2 access token for LinkedIn API authentication"
-    )
+    @Schema(title = "Access Token", description = "The OAuth2 access token for LinkedIn API authentication")
     @NotNull
     private Property<String> accessToken;
 
-    @Schema(
-        title = "Post URNs",
-        description = "List of LinkedIn post URNs to monitor for new comments"
-    )
+    @Schema(title = "Post URNs", description = "List of LinkedIn post URNs to monitor for new comments")
     @NotNull
     private Property<List<String>> postUrns;
 
-    @Schema(
-        title = "Polling interval",
-        description = "How often to check for new comments"
-    )
+    @Schema(title = "Polling interval", description = "How often to check for new comments")
     @PluginProperty
     @Builder.Default
     private Duration interval = Duration.ofMinutes(30);
 
-    @Schema(
-        title = "LinkedIn API Version",
-        description = "LinkedIn API version header"
-    )
+    @Schema(title = "LinkedIn API Version", description = "LinkedIn API version header")
     @Builder.Default
     private Property<String> linkedinVersion = Property.ofValue("202509");
 
-    @Schema(
-        title = "Application Name",
-        description = "Name of the application making the request"
-    )
+    @Schema(title = "Application Name", description = "Name of the application making the request")
     @Builder.Default
     private Property<String> applicationName = Property.ofValue("kestra-linkedin-plugin");
 
@@ -134,38 +108,38 @@ public class CommentTrigger extends AbstractTrigger implements PollingTriggerInt
         String rLinkedinVersion = runContext.render(this.linkedinVersion).as(String.class).orElse("202509");
 
         HttpConfiguration httpConfiguration = HttpConfiguration.builder()
-            .auth(BearerAuthConfiguration.builder()
-                .token(Property.ofValue(rAccessToken))
-                .build())
-            .build();
+                .auth(BearerAuthConfiguration.builder()
+                        .token(Property.ofValue(rAccessToken))
+                        .build())
+                .build();
         List<String> postsToMonitor = new ArrayList<>();
- 
+
         postsToMonitor.addAll(rPostUrns);
-        
+
         runContext.logger().info("Checking for new comments on {} posts", postsToMonitor.size());
 
         Instant lastCheckTime = context.getNextExecutionDate() != null
-            ? context.getNextExecutionDate().toInstant().minus(this.interval)
-            : Instant.now().minus(this.interval);
+                ? context.getNextExecutionDate().toInstant().minus(this.interval)
+                : Instant.now().minus(this.interval);
 
         List<CommentData> newComments = new ArrayList<>();
 
         try (HttpClient httpClient = HttpClient.builder()
-            .runContext(runContext)
-            .configuration(httpConfiguration)
-            .build()){
+                .runContext(runContext)
+                .configuration(httpConfiguration)
+                .build()) {
             for (String postUrn : postsToMonitor) {
                 String encodedUrn = URLEncoder.encode(postUrn, StandardCharsets.UTF_8);
                 String apiUrl = "https://api.linkedin.com/rest/socialActions/" + encodedUrn + "/comments";
 
                 HttpRequest request = HttpRequest.builder()
-                    .uri(URI.create(apiUrl))
-                    .method("GET")
-                    .addHeader("LinkedIn-Version", rLinkedinVersion)
-                    .addHeader("X-Restli-Protocol-Version", "2.0.0")
-                    .build();
+                        .uri(URI.create(apiUrl))
+                        .method("GET")
+                        .addHeader("LinkedIn-Version", rLinkedinVersion)
+                        .addHeader("X-Restli-Protocol-Version", "2.0.0")
+                        .build();
 
-                HttpResponse<String> response = httpClient.request(request,String.class);
+                HttpResponse<String> response = httpClient.request(request, String.class);
                 String responseBody = response.getBody();
 
                 JsonNode jsonResponse = JacksonMapper.ofIon().readTree(responseBody);
@@ -192,20 +166,20 @@ public class CommentTrigger extends AbstractTrigger implements PollingTriggerInt
 
             // Get the most recent comment for the output
             CommentData latest = newComments.stream()
-                .max((c1, c2) -> c1.getCreatedTime().compareTo(c2.getCreatedTime()))
-                .orElse(newComments.getFirst());
+                    .max((c1, c2) -> c1.getCreatedTime().compareTo(c2.getCreatedTime()))
+                    .orElse(newComments.getFirst());
 
             Output output = Output.builder()
-                .postUrn(latest.getPostUrn())
-                .commentId(latest.getCommentId())
-                .commentUrn(latest.getCommentUrn())
-                .commentText(latest.getCommentText())
-                .actorUrn(latest.getActorUrn())
-                .agentUrn(latest.getAgentUrn())
-                .createdTime(latest.getCreatedTime())
-                .newCommentsCount(newComments.size())
-                .allNewComments(newComments)
-                .build();
+                    .postUrn(latest.getPostUrn())
+                    .commentId(latest.getCommentId())
+                    .commentUrn(latest.getCommentUrn())
+                    .commentText(latest.getCommentText())
+                    .actorUrn(latest.getActorUrn())
+                    .agentUrn(latest.getAgentUrn())
+                    .createdTime(latest.getCreatedTime())
+                    .newCommentsCount(newComments.size())
+                    .allNewComments(newComments)
+                    .build();
 
             Execution execution = TriggerService.generateExecution(this, conditionContext, context, output);
             return Optional.of(execution);
@@ -242,16 +216,15 @@ public class CommentTrigger extends AbstractTrigger implements PollingTriggerInt
         String agentUrn = commentObj.has("agent") ? commentObj.get("agent").asText() : null;
 
         return CommentData.builder()
-            .postUrn(postUrn)
-            .commentId(commentId)
-            .commentUrn(commentUrn)
-            .commentText(commentText)
-            .actorUrn(actorUrn)
-            .agentUrn(agentUrn)
-            .createdTime(createdTime)
-            .build();
+                .postUrn(postUrn)
+                .commentId(commentId)
+                .commentUrn(commentUrn)
+                .commentText(commentText)
+                .actorUrn(actorUrn)
+                .agentUrn(agentUrn)
+                .createdTime(createdTime)
+                .build();
     }
-
 
     @Builder
     @Getter

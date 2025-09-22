@@ -25,16 +25,9 @@ import java.util.*;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@Schema(
-    title = "Get LinkedIn Post Analytics (Reactions)",
-    description = "Retrieve detailed reactions analytics for one or more LinkedIn posts/activities including reaction types, counts, and actor information"
-)
-@Plugin(
-    examples = {
-        @Example(
-            title = "Get reactions for multiple posts",
-            full = true,
-            code = """
+@Schema(title = "Get LinkedIn Post Analytics (Reactions)", description = "Retrieve detailed reactions analytics for one or more LinkedIn posts/activities including reaction types, counts, and actor information")
+@Plugin(examples = {
+        @Example(title = "Get reactions for multiple posts", full = true, code = """
                 id: linkedin_post_analytics
                 namespace: company.team
                 tasks:
@@ -48,16 +41,11 @@ import java.util.*;
                     accessToken: "{{ outputs.authenticate.accessToken }}"
                     activityUrns:
                       - "urn:li:activity:7374025671234244609"
-                """
-        )
-    }
-)
+                """)
+})
 public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTask<GetPostAnalytics.Output> {
 
-    @Schema(
-        title = "Activity URNs",
-        description = "List of LinkedIn activity URNs to get reactions analytics for"
-    )
+    @Schema(title = "Activity URNs", description = "List of LinkedIn activity URNs to get reactions analytics for")
     @NotNull
     private Property<List<String>> activityUrns;
 
@@ -66,44 +54,45 @@ public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTa
         List<String> rActivityUrns = runContext.render(this.activityUrns).asList(String.class);
         List<PostReactionsData> results = new ArrayList<>();
 
-        try(HttpClient httpClient = createLinkedinHttpRequestFactory(runContext)) {
-        for (String activityUrn : rActivityUrns) {
-                try{
-                String encodedUrn = URLEncoder.encode(activityUrn, StandardCharsets.UTF_8);
+        try (HttpClient httpClient = createLinkedinHttpRequestFactory(runContext)) {
+            for (String activityUrn : rActivityUrns) {
+                try {
+                    String encodedUrn = URLEncoder.encode(activityUrn, StandardCharsets.UTF_8);
 
-                String finalUrl = getLinkedinApiBaseUrl(runContext)+"/reactions/(entity:" + encodedUrn + ")?q=entity&sort=(value:REVERSE_CHRONOLOGICAL)";
+                    String finalUrl = getLinkedinApiBaseUrl(runContext) + "/reactions/(entity:" + encodedUrn
+                            + ")?q=entity&sort=(value:REVERSE_CHRONOLOGICAL)";
 
-                HttpRequest request = HttpRequest.builder()
-                .uri(URI.create(finalUrl))
-                .method("GET")
-                .addHeader("LinkedIn-Version", "202509")
-                .addHeader("X-Restli-Protocol-Version", "2.0.0")
-                .build();
-                HttpResponse<String> response = httpClient.request(request,String.class);
+                    HttpRequest request = HttpRequest.builder()
+                            .uri(URI.create(finalUrl))
+                            .method("GET")
+                            .addHeader("LinkedIn-Version", "202509")
+                            .addHeader("X-Restli-Protocol-Version", "2.0.0")
+                            .build();
+                    HttpResponse<String> response = httpClient.request(request, String.class);
 
-                String responseBody = response.getBody();
+                    String responseBody = response.getBody();
 
-                JsonNode jsonResponse = JacksonMapper.ofJson().readTree(responseBody);
-                PostReactionsData postData = parsePostReactions(activityUrn, jsonResponse);
-                results.add(postData);
+                    JsonNode jsonResponse = JacksonMapper.ofJson().readTree(responseBody);
+                    PostReactionsData postData = parsePostReactions(activityUrn, jsonResponse);
+                    results.add(postData);
 
-            } catch (Exception e) {
-                results.add(PostReactionsData.builder()
-                    .activityUrn(activityUrn)
-                    .totalReactions(0)
-                    .reactions(new ArrayList<>())
-                    .reactionsSummary(new HashMap<>())
-                    .error("Failed: " + e.getMessage())
-                    .build());
-                throw new RuntimeException("Failed to retrieve reactions for: " + activityUrn, e);
+                } catch (Exception e) {
+                    results.add(PostReactionsData.builder()
+                            .activityUrn(activityUrn)
+                            .totalReactions(0)
+                            .reactions(new ArrayList<>())
+                            .reactionsSummary(new HashMap<>())
+                            .error("Failed: " + e.getMessage())
+                            .build());
+                    throw new RuntimeException("Failed to retrieve reactions for: " + activityUrn, e);
+                }
             }
         }
-    }
         return Output.builder()
-            .posts(results)
-            .totalPosts(results.size())
-            .totalReactions(results.stream().mapToInt(PostReactionsData::getTotalReactions).sum())
-            .build();
+                .posts(results)
+                .totalPosts(results.size())
+                .totalReactions(results.stream().mapToInt(PostReactionsData::getTotalReactions).sum())
+                .build();
     }
 
     private PostReactionsData parsePostReactions(String activityUrn, JsonNode jsonResponse) {
@@ -132,30 +121,37 @@ public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTa
         }
 
         return PostReactionsData.builder()
-            .activityUrn(activityUrn)
-            .totalReactions(totalReactions)
-            .reactions(reactions)
-            .reactionsSummary(reactionsSummary)
-            .build();
+                .activityUrn(activityUrn)
+                .totalReactions(totalReactions)
+                .reactions(reactions)
+                .reactionsSummary(reactionsSummary)
+                .build();
     }
 
     private ReactionData parseReactionElement(JsonNode reactionObj) {
         ReactionData.ReactionDataBuilder builder = ReactionData.builder();
 
-        if (reactionObj.has("id")) builder.reactionId(reactionObj.get("id").asText());
-        if (reactionObj.has("reactionType")) builder.reactionType(reactionObj.get("reactionType").asText());
-        if (reactionObj.has("root")) builder.rootUrn(reactionObj.get("root").asText());
+        if (reactionObj.has("id"))
+            builder.reactionId(reactionObj.get("id").asText());
+        if (reactionObj.has("reactionType"))
+            builder.reactionType(reactionObj.get("reactionType").asText());
+        if (reactionObj.has("root"))
+            builder.rootUrn(reactionObj.get("root").asText());
 
         if (reactionObj.has("created")) {
             JsonNode created = reactionObj.get("created");
-            if (created.has("actor")) builder.actorUrn(created.get("actor").asText());
-            if (created.has("time")) builder.createdTime(created.get("time").asLong());
-            if (created.has("impersonator")) builder.impersonatorUrn(created.get("impersonator").asText());
+            if (created.has("actor"))
+                builder.actorUrn(created.get("actor").asText());
+            if (created.has("time"))
+                builder.createdTime(created.get("time").asLong());
+            if (created.has("impersonator"))
+                builder.impersonatorUrn(created.get("impersonator").asText());
         }
 
         if (reactionObj.has("lastModified")) {
             JsonNode lastModified = reactionObj.get("lastModified");
-            if (lastModified.has("time")) builder.lastModifiedTime(lastModified.get("time").asLong());
+            if (lastModified.has("time"))
+                builder.lastModifiedTime(lastModified.get("time").asLong());
         }
 
         return builder.build();
