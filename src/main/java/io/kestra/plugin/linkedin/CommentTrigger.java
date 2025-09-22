@@ -113,7 +113,7 @@ public class CommentTrigger extends AbstractTrigger implements PollingTriggerInt
         description = "LinkedIn API version header"
     )
     @Builder.Default
-    private Property<String> linkedinVersion = Property.ofValue("202502");
+    private Property<String> linkedinVersion = Property.ofValue("202509");
 
     @Schema(
         title = "Application Name",
@@ -130,15 +130,15 @@ public class CommentTrigger extends AbstractTrigger implements PollingTriggerInt
     @Override
     public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws Exception {
         RunContext runContext = conditionContext.getRunContext();
-        String renderedAccessToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
-        List<String> renderedPostUrns = runContext.render(this.postUrns).asList(String.class);
-        String renderedLinkedinVersion = runContext.render(this.linkedinVersion).as(String.class).orElse("202502");
+        String rAccessToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
+        List<String> rPostUrns = runContext.render(this.postUrns).asList(String.class);
+        String rLinkedinVersion = runContext.render(this.linkedinVersion).as(String.class).orElse("202509");
 
-        HttpRequestFactory requestFactory = createLinkedinHttpRequestFactory(renderedAccessToken);
+        HttpRequestFactory requestFactory = createLinkedinHttpRequestFactory(rAccessToken);
 
         List<String> postsToMonitor = new ArrayList<>();
         if (this.postUrns != null) {
-            postsToMonitor.addAll(renderedPostUrns);
+            postsToMonitor.addAll(rPostUrns);
         }
 
         if (postsToMonitor.isEmpty()) {
@@ -163,7 +163,7 @@ public class CommentTrigger extends AbstractTrigger implements PollingTriggerInt
                 GenericUrl url = new GenericUrl(apiUrl,true);
                 HttpRequest request = requestFactory.buildGetRequest(url);
 
-                request.getHeaders().set("LinkedIn-Version", renderedLinkedinVersion);
+                request.getHeaders().set("LinkedIn-Version", rLinkedinVersion);
                 request.getHeaders().set("X-Restli-Protocol-Version", "2.0.0");
 
                 HttpResponse response = request.execute();
@@ -195,7 +195,7 @@ public class CommentTrigger extends AbstractTrigger implements PollingTriggerInt
             // Get the most recent comment for the output
             CommentData latest = newComments.stream()
                 .max((c1, c2) -> c1.getCreatedTime().compareTo(c2.getCreatedTime()))
-                .orElse(newComments.get(0));
+                .orElse(newComments.getFirst());
 
             Output output = Output.builder()
                 .postUrn(latest.getPostUrn())

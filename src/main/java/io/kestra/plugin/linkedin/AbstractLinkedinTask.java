@@ -39,19 +39,19 @@ public class AbstractLinkedinTask extends Task {
         description = "LinkedIn API version to use"
     )
     @Builder.Default
-    protected Property<String> apiVersion = Property.ofValue("202404");
+    protected Property<String> apiVersion = Property.ofValue("202509");
 
     protected HttpRequestFactory createLinkedinHttpRequestFactory(RunContext runContext) throws Exception {
-        String renderedAccessToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
+        String rAccessToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
 
         Credential credential = new Credential(BearerToken.authorizationHeaderAccessMethod());
-        credential.setAccessToken(renderedAccessToken);
+        credential.setAccessToken(rAccessToken);
 
         return new NetHttpTransport().createRequestFactory(credential);
     }
 
     protected String getLinkedinApiBaseUrl(RunContext runContext) throws Exception {
-        String renderedApiVersion = runContext.render(this.apiVersion).as(String.class).orElse("202404");
+        String rApiVersion = runContext.render(this.apiVersion).as(String.class).orElse("202509");
         return "https://api.linkedin.com/rest";
     }
 }

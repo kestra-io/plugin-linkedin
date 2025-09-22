@@ -67,11 +67,11 @@ public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTa
     @Override
     public Output run(RunContext runContext) throws Exception {
         HttpRequestFactory requestFactory = createLinkedinHttpRequestFactory(runContext);
-        List<String> renderedActivityUrns = runContext.render(this.activityUrns).asList(String.class);
+        List<String> rActivityUrns = runContext.render(this.activityUrns).asList(String.class);
         List<PostReactionsData> results = new ArrayList<>();
         Gson gson = new Gson();
 
-        for (String activityUrn : renderedActivityUrns) {
+        for (String activityUrn : rActivityUrns) {
             try {
                 String encodedUrn = URLEncoder.encode(activityUrn, StandardCharsets.UTF_8);
                
