@@ -4,12 +4,12 @@ namespace: io.kestra.plugin.linkedin
 tasks:
   - id: authenticate
     type: io.kestra.plugin.linkedin.OAuth2
-    clientId: "{{ secret('LINKEDIN_CLIENT_ID') }}"
-    clientSecret: "{{ secret('LINKEDIN_CLIENT_SECRET') }}"
-    refreshToken: "{{ secret('LINKEDIN_REFRESH_TOKEN') }}"
+    clientId: "test-client-id"
+    clientSecret: "test-client-secret"
+    refreshToken: "test-refresh-token"
 
   - id: get_analytics
-    type: io.kestra.plugin.linkedin.PostAnalytics
+    type: io.kestra.plugin.linkedin.GetPostAnalytics
     accessToken: "{{ outputs.authenticate.accessToken }}"
     activityUrns:
       - "urn:li:activity:7374025671234244609"
