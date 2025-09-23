@@ -37,7 +37,7 @@ import java.util.*;
                     clientSecret: "{{ secret('LINKEDIN_CLIENT_SECRET') }}"
                     refreshToken: "{{ secret('LINKEDIN_REFRESH_TOKEN') }}"
                   - id: get_analytics
-                    type: io.kestra.plugin.linkedin.PostAnalytics
+                    type: io.kestra.plugin.linkedin.GetPostAnalytics
                     accessToken: "{{ outputs.authenticate.accessToken }}"
                     activityUrns:
                       - "urn:li:activity:7374025671234244609"
