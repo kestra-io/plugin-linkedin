@@ -29,6 +29,10 @@ public class AbstractLinkedinTask extends Task {
     @Builder.Default
     protected Property<String> apiVersion = Property.ofValue("202509");
 
+    @Schema(title = "Base API URL", description = "The base api url of the linkedin")
+    @Builder.Default
+    protected Property<String> apiBaseUrl = Property.ofValue("https://api.linkedin.com/rest");
+
     protected HttpClient createLinkedinHttpRequestFactory(RunContext runContext) throws Exception {
         String rAccessToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
 
@@ -44,6 +48,6 @@ public class AbstractLinkedinTask extends Task {
     }
 
     protected String getLinkedinApiBaseUrl(RunContext runContext) throws Exception {
-        return "https://api.linkedin.com/rest";
+        return runContext.render(this.apiBaseUrl).as(String.class).orElse("https://api.linkedin.com/rest");
     }
 }

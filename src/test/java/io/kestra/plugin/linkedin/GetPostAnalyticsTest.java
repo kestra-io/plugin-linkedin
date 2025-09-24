@@ -2,129 +2,64 @@ package io.kestra.plugin.linkedin;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContextFactory;
+import io.micronaut.runtime.server.EmbeddedServer;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
-import java.util.ArrayList;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 @KestraTest
 class GetPostAnalyticsTest {
+    @Inject
+    RunContextFactory runContextFactory;
+
+    @Inject
+    EmbeddedServer server;
+
+    @BeforeEach
+    void ensureServer() {
+        if (!server.isRunning())
+            server.start();
+    }
 
     @Test
-    void shouldBuildTask() throws Exception {
+    void shouldFetchAndParseReactions() throws Exception {
+        String baseUrl = server.getURI().toString();
+        String activityUrn = "urn:li:activity:123456789";
+
         GetPostAnalytics task = GetPostAnalytics.builder()
                 .accessToken(Property.ofValue("test-access-token"))
-                .activityUrns(Property.ofValue(List.of("urn:li:activity:1234567890")))
+                .apiBaseUrl(Property.ofValue(baseUrl))
+                .activityUrns(Property.ofValue(List.of(activityUrn)))
                 .build();
 
-        assertThat(task.getAccessToken(), is(notNullValue()));
-        assertThat(task.getActivityUrns(), is(notNullValue()));
-    }
+        var runContext = runContextFactory.of(Map.of());
+        var out = task.run(runContext);
 
-    @Test
-    void shouldTestReactionDataClass() {
-        GetPostAnalytics.ReactionData reactionData = GetPostAnalytics.ReactionData.builder()
-                .reactionId("reaction123")
-                .reactionType("LIKE")
-                .actorUrn("urn:li:person:actor123")
-                .rootUrn("urn:li:activity:1234567890")
-                .createdTime(1640995200000L)
-                .lastModifiedTime(1640995300000L)
-                .impersonatorUrn("urn:li:organization:impersonator456")
-                .build();
+        assertThat(out.getTotalPosts(), equalTo(1));
+        assertThat(out.getTotalReactions(), equalTo(2));
+        assertThat(out.getPosts(), hasSize(1));
 
-        assertThat(reactionData.getReactionId(), is("reaction123"));
-        assertThat(reactionData.getReactionType(), is("LIKE"));
-        assertThat(reactionData.getActorUrn(), is("urn:li:person:actor123"));
-        assertThat(reactionData.getRootUrn(), is("urn:li:activity:1234567890"));
-        assertThat(reactionData.getCreatedTime(), is(1640995200000L));
-        assertThat(reactionData.getLastModifiedTime(), is(1640995300000L));
-        assertThat(reactionData.getImpersonatorUrn(), is("urn:li:organization:impersonator456"));
-    }
+        var post = out.getPosts().getFirst();
+        assertThat(post.getActivityUrn(), equalTo(activityUrn));
+        assertThat(post.getTotalReactions(), equalTo(2));
+        assertThat(post.getReactions(), hasSize(2));
+        assertThat(post.getReactionsSummary(), allOf(
+                hasEntry("LIKE", 1),
+                hasEntry("CELEBRATE", 1)));
 
-    @Test
-    void shouldTestPostReactionsDataWithError() {
-        GetPostAnalytics.PostReactionsData postData = GetPostAnalytics.PostReactionsData.builder()
-                .activityUrn("urn:li:activity:1234567890")
-                .totalReactions(0)
-                .reactions(new ArrayList<>())
-                .reactionsSummary(new HashMap<>())
-                .error("Failed: API rate limit exceeded")
-                .build();
-
-        assertThat(postData.getActivityUrn(), is("urn:li:activity:1234567890"));
-        assertThat(postData.getTotalReactions(), is(0));
-        assertThat(postData.getReactions(), hasSize(0));
-        assertThat(postData.getReactionsSummary(), is(anEmptyMap()));
-        assertThat(postData.getError(), is("Failed: API rate limit exceeded"));
-    }
-
-    @Test
-    void shouldTestOutputClass() {
-        List<GetPostAnalytics.PostReactionsData> posts = new ArrayList<>();
-        posts.add(GetPostAnalytics.PostReactionsData.builder()
-                .activityUrn("urn:li:activity:1234567890")
-                .totalReactions(5)
-                .reactions(new ArrayList<>())
-                .reactionsSummary(Map.of("LIKE", 3, "PRAISE", 2))
-                .build());
-        posts.add(GetPostAnalytics.PostReactionsData.builder()
-                .activityUrn("urn:li:activity:0987654321")
-                .totalReactions(3)
-                .reactions(new ArrayList<>())
-                .reactionsSummary(Map.of("LIKE", 2, "EMPATHY", 1))
-                .build());
-
-        GetPostAnalytics.Output output = GetPostAnalytics.Output.builder()
-                .posts(posts)
-                .totalPosts(2)
-                .totalReactions(8)
-                .build();
-
-        assertThat(output.getPosts(), hasSize(2));
-        assertThat(output.getTotalPosts(), is(2));
-        assertThat(output.getTotalReactions(), is(8));
-    }
-
-    @Test
-    void shouldTestReactionDataWithNullValues() {
-        GetPostAnalytics.ReactionData reactionData = GetPostAnalytics.ReactionData.builder()
-                .reactionId("reaction123")
-                .reactionType(null)
-                .actorUrn(null)
-                .rootUrn(null)
-                .createdTime(null)
-                .lastModifiedTime(null)
-                .impersonatorUrn(null)
-                .build();
-
-        assertThat(reactionData.getReactionId(), is("reaction123"));
-        assertThat(reactionData.getReactionType(), is(nullValue()));
-        assertThat(reactionData.getActorUrn(), is(nullValue()));
-        assertThat(reactionData.getRootUrn(), is(nullValue()));
-        assertThat(reactionData.getCreatedTime(), is(nullValue()));
-        assertThat(reactionData.getLastModifiedTime(), is(nullValue()));
-        assertThat(reactionData.getImpersonatorUrn(), is(nullValue()));
-    }
-
-    @Test
-    void shouldTestEmptyReactionsScenario() {
-        GetPostAnalytics.PostReactionsData postData = GetPostAnalytics.PostReactionsData.builder()
-                .activityUrn("urn:li:activity:1234567890")
-                .totalReactions(0)
-                .reactions(new ArrayList<>())
-                .reactionsSummary(new HashMap<>())
-                .build();
-
-        assertThat(postData.getActivityUrn(), is("urn:li:activity:1234567890"));
-        assertThat(postData.getTotalReactions(), is(0));
-        assertThat(postData.getReactions(), is(empty()));
-        assertThat(postData.getReactionsSummary(), is(anEmptyMap()));
-        assertThat(postData.getError(), is(nullValue()));
+        var r1 = post.getReactions().getFirst();
+        assertThat(r1.getReactionId(), equalTo("r1"));
+        assertThat(r1.getReactionType(), equalTo("LIKE"));
+        assertThat(r1.getActorUrn(), equalTo("urn:li:person:abc"));
+        assertThat(r1.getRootUrn(), equalTo(activityUrn));
+        assertThat(r1.getCreatedTime(), equalTo(1700000000000L));
+        assertThat(r1.getLastModifiedTime(), equalTo(1700000005000L));
     }
 }

@@ -1,71 +1,73 @@
 package io.kestra.plugin.linkedin;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
 import org.junit.jupiter.api.Test;
 
+import jakarta.inject.Inject;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 @KestraTest
 class CommentTriggerTest {
+    @Inject
+    private RunContextFactory runContextFactory;
 
     @Test
-    void shouldBuildTrigger() {
-        CommentTrigger trigger = CommentTrigger.builder()
+    void testTaskBuilderDefaults() throws IllegalVariableEvaluationException {
+        RunContext runContext = runContextFactory.of(Map.of());
+        CommentTrigger task = CommentTrigger.builder()
+                .id("test-trigger")
+                .type(CommentTrigger.class.getName())
                 .accessToken(Property.ofValue("test-access-token"))
-                .postUrns(Property.ofValue(List.of("urn:li:activity:1234567890")))
-                .interval(Duration.ofMinutes(15))
+                .postUrns(Property.ofValue(List.of("urn:li:activity:123456789")))
+                .interval(Duration.parse("PT5M"))
                 .build();
 
-        assertThat(trigger.getAccessToken(), is(notNullValue()));
-        assertThat(trigger.getPostUrns(), is(notNullValue()));
-        assertThat(trigger.getInterval(), is(Duration.ofMinutes(15)));
-        assertThat(trigger.getLinkedinVersion(), is(notNullValue()));
-        assertThat(trigger.getApplicationName(), is(notNullValue()));
+        String applicationName = runContext.render(task.getApplicationName()).as(String.class).orElse(null);
+        assertThat(applicationName, equalTo("kestra-linkedin-plugin"));
     }
 
     @Test
-    void shouldUseDefaultValues() throws Exception {
-        CommentTrigger trigger = CommentTrigger.builder()
+    void testCommentTriggerWithMultiplePostUrns() throws IllegalVariableEvaluationException {
+        CommentTrigger task = CommentTrigger.builder()
+                .id("test-trigger")
+                .type(CommentTrigger.class.getName())
                 .accessToken(Property.ofValue("test-access-token"))
-                .postUrns(Property.ofValue(List.of("urn:li:activity:1234567890")))
+                .postUrns(Property.ofValue(List.of("urn:li:activity:1", "urn:li:activity:2")))
+                .interval(Duration.parse("PT5M"))
                 .build();
 
-        assertThat(trigger.getInterval(), is(Duration.ofMinutes(30)));
-
-        assertThat(trigger.getLinkedinVersion(), is(notNullValue()));
-        assertThat(trigger.getApplicationName(), is(notNullValue()));
+        var runContext = runContextFactory.of(Map.of());
+        var urns = runContext.render(task.getPostUrns()).asList(String.class);
+        assertThat(urns, hasSize(2));
+        assertThat(urns, contains("urn:li:activity:1", "urn:li:activity:2"));
     }
 
     @Test
-    void shouldValidateRequiredFields() {
-        CommentTrigger trigger = CommentTrigger.builder()
-                .accessToken(Property.ofValue("test-access-token"))
-                .postUrns(Property.ofValue(List.of("urn:li:activity:1234567890")))
+    void testCommentTriggerPropertyRendering() throws Exception {
+        RunContext runContext = runContextFactory.of(Map.of());
+
+        CommentTrigger task = CommentTrigger.builder()
+                .id("test-trigger")
+                .type(CommentTrigger.class.getName())
+                .accessToken(Property.ofValue("abc"))
+                .postUrns(Property.ofValue(List.of("urn:li:activity:42")))
+                .interval(Duration.parse("PT5M"))
                 .build();
 
-        assertThat(trigger.getAccessToken(), is(notNullValue()));
-        assertThat(trigger.getPostUrns(), is(notNullValue()));
-    }
+        String token = runContext.render(task.getAccessToken()).as(String.class).orElse(null);
+        List<String> urns = runContext.render(task.getPostUrns()).asList(String.class);
 
-    @Test
-    void shouldHandleMultiplePostUrns() {
-        List<String> postUrns = List.of(
-                "urn:li:activity:1234567890",
-                "urn:li:activity:0987654321",
-                "urn:li:activity:1122334455");
-
-        CommentTrigger trigger = CommentTrigger.builder()
-                .accessToken(Property.ofValue("test-access-token"))
-                .postUrns(Property.ofValue(postUrns))
-                .build();
-
-        assertThat(trigger.getPostUrns(), is(notNullValue()));
-        assertThat(trigger.getPostUrns(), is(instanceOf(Property.class)));
+        assertThat(token, equalTo("abc"));
+        assertThat(urns, contains("urn:li:activity:42"));
     }
 
 }
