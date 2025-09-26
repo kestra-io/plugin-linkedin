@@ -28,18 +28,22 @@ import java.util.Map;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@Schema(title = "Authenticate with LinkedIn using OAuth2", description = "This task allows you to authenticate with LinkedIn API using OAuth2 refresh token flow.")
+@Schema(title = "Authenticate with LinkedIn using OAuth2",
+        description = "This task allows you to authenticate with LinkedIn API using OAuth2 refresh token flow.")
 @Plugin(examples = {
-                @Example(title = "Authentication with LinkedIn", full = true, code = """
-                                id: linkedin_auth
-                                namespace: company.team
-                                tasks:
-                                  - id: authenticate
-                                    type: io.kestra.plugin.linkedin.OAuth2
-                                    clientId: "{{ secret('LINKEDIN_CLIENT_ID') }}"
-                                    clientSecret: "{{ secret('LINKEDIN_CLIENT_SECRET') }}"
-                                    refreshToken: "{{ secret('LINKEDIN_REFRESH_TOKEN') }}"
-                                """)
+          @Example(title = "Authentication with LinkedIn",
+                   full = true, 
+                   code = """
+                        id: linkedin_auth
+                        namespace: company.team
+
+                        tasks:
+                          - id: authenticate
+                            type: io.kestra.plugin.linkedin.OAuth2
+                            clientId: "{{ secret('LINKEDIN_CLIENT_ID') }}"
+                            clientSecret: "{{ secret('LINKEDIN_CLIENT_SECRET') }}"
+                            refreshToken: "{{ secret('LINKEDIN_REFRESH_TOKEN') }}"
+                """)
 })
 public class OAuth2 extends Task implements RunnableTask<OAuth2.Output> {
         @Schema(title = "The OAuth2 Client ID", description = "OAuth2 client ID from LinkedIn Developer Portal")

@@ -25,9 +25,12 @@ import java.util.*;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@Schema(title = "Get LinkedIn Post Analytics (Reactions)", description = "Retrieve detailed reactions analytics for one or more LinkedIn posts/activities including reaction types, counts, and actor information")
+@Schema(title = "Get LinkedIn Post Analytics (Reactions)",
+        description = "Retrieve detailed reactions analytics for one or more LinkedIn posts/activities including reaction types,counts, and actor information")
 @Plugin(examples = {
-        @Example(title = "Get reactions for multiple posts", full = true, code = """
+        @Example(title = "Get reactions for multiple posts",
+                 full = true,
+                 code = """
                 id: linkedin_post_analytics
                 namespace: company.team
                 tasks:
@@ -36,6 +39,7 @@ import java.util.*;
                     clientId: "{{ secret('LINKEDIN_CLIENT_ID') }}"
                     clientSecret: "{{ secret('LINKEDIN_CLIENT_SECRET') }}"
                     refreshToken: "{{ secret('LINKEDIN_REFRESH_TOKEN') }}"
+                    
                   - id: get_analytics
                     type: io.kestra.plugin.linkedin.GetPostAnalytics
                     accessToken: "{{ outputs.authenticate.accessToken }}"
