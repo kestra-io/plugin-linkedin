@@ -1,0 +1,17 @@
+id: linkedin-post-analytics-test
+namespace: io.kestra.plugin.linkedin
+
+tasks:
+  - id: authenticate
+    type: io.kestra.plugin.linkedin.OAuth2
+    clientId: "test-client-id"
+    clientSecret: "test-client-secret"
+    refreshToken: "test-refresh-token"
+    tokenUrl: "{{ vars.linkedin_base_url }}/oauth/v2/accessToken"
+
+  - id: get_analytics
+    type: io.kestra.plugin.linkedin.GetPostAnalytics
+    accessToken: "{{ outputs.authenticate.accessToken }}"
+    apiBaseUrl: "{{ vars.linkedin_base_url }}"
+    activityUrns:
+      - "urn:li:activity:7374025671234244609"
