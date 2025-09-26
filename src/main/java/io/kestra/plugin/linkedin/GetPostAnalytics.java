@@ -77,7 +77,7 @@ public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTa
                     results.add(postData);
 
                 } catch (Exception e) {
-                    runContext.logger().error("Failed to retrieve reactions for URN: " + activityUrn, e);
+                    runContext.logger().error("Failed to retrieve reactions for URN: {}", activityUrn, e);
                     results.add(PostReactionsData.builder()
                             .activityUrn(activityUrn)
                             .totalReactions(0)
@@ -99,7 +99,7 @@ public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTa
     private PostReactionsData parsePostReactions(String activityUrn, JsonNode jsonResponse) {
         List<ReactionData> reactions = new ArrayList<>();
         Map<String, Integer> reactionsSummary = new HashMap<>();
-        int totalReactions = 0;
+        int totalReactions ;
 
         if (jsonResponse.has("elements")) {
             JsonNode elements = jsonResponse.get("elements");

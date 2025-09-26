@@ -11,10 +11,8 @@ import java.nio.charset.StandardCharsets;
 public class LinkedInReactionsStubController {
     @Get("/reactions/{path:.*}")
     public HttpResponse<String> reactions(
-            HttpRequest<?> request,
             @PathVariable String path,
-            @QueryValue @Nullable String q,
-            @QueryValue @Nullable String sort) {
+            @QueryValue @Nullable String q) {
         if (!path.startsWith("(entity:") || !"entity".equals(q)) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
@@ -22,7 +20,7 @@ public class LinkedInReactionsStubController {
         if (!path.endsWith(")")) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
-        String encodedUrn = path.substring("(entity:".length());
+        String encodedUrn = path.substring("(entity:".length(),path.length()-1);
         String urn = URLDecoder.decode(encodedUrn, StandardCharsets.UTF_8);
 
         String body = """
