@@ -25,28 +25,35 @@ import java.util.*;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@Schema(title = "Get LinkedIn Post Analytics (Reactions)",
-        description = "Retrieve detailed reactions analytics for one or more LinkedIn posts/activities including reaction types,counts, and actor information")
-@Plugin(examples = {
-        @Example(title = "Get reactions for multiple posts",
-                 full = true,
-                 code = """
+@Schema(
+    title = "Get LinkedIn Post Analytics (Reactions)",
+    description = "Retrieve detailed reactions analytics for one or more LinkedIn posts/activities including reaction types, counts, and actor information"
+)
+@Plugin(
+    examples = {
+        @Example(
+            title = "Get reactions for multiple posts",
+            full = true,
+            code = """
                 id: linkedin_post_analytics
                 namespace: company.team
+
                 tasks:
                   - id: authenticate
                     type: io.kestra.plugin.linkedin.OAuth2
                     clientId: "{{ secret('LINKEDIN_CLIENT_ID') }}"
                     clientSecret: "{{ secret('LINKEDIN_CLIENT_SECRET') }}"
                     refreshToken: "{{ secret('LINKEDIN_REFRESH_TOKEN') }}"
-                    
+
                   - id: get_analytics
                     type: io.kestra.plugin.linkedin.GetPostAnalytics
                     accessToken: "{{ outputs.authenticate.accessToken }}"
                     activityUrns:
                       - "urn:li:activity:7374025671234244609"
-                """)
-})
+                """
+        )
+    }
+)
 public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTask<GetPostAnalytics.Output> {
 
     @Schema(title = "Activity URNs", description = "List of LinkedIn activity URNs to get reactions analytics for")

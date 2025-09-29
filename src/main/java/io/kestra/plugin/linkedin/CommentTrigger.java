@@ -34,48 +34,58 @@ import java.util.Optional;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@Schema(title = "Trigger on new LinkedIn comments",
-        description = "Monitors LinkedIn posts for new comments and triggers executions when found.")
-@Plugin(examples = {
-        @Example(title = "Monitor post for new comments",
-                 full = true,
-                 code = """
-                    id: linkedin_comment_monitor
-                    namespace: company.team
-                    tasks:
-                        - id: authenticate
-                          type: io.kestra.plugin.linkedin.OAuth2
-                          clientId: "{{ secret('LINKEDIN_CLIENT_ID') }}"
-                          clientSecret: "{{ secret('LINKEDIN_CLIENT_SECRET') }}"
-                          refreshToken: "{{ secret('LINKEDIN_REFRESH_TOKEN') }}"
+@Schema(
+    title = "Trigger on new LinkedIn comments",
+    description = "Monitors LinkedIn posts for new comments and triggers executions when found. This trigger polls LinkedIn's API at regular intervals to detect new comments on specified posts and can trigger downstream tasks like notifications."
+)
+@Plugin(
+    examples = {
+        @Example(
+            title = "Monitor post for new comments",
+            full = true,
+            code = """
+                id: linkedin_comment_monitor
+                namespace: company.team
 
-                        - id: notify_slack
-                          type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
-                          url: "{{ secret('SLACK_WEBHOOK_URL') }}"
-                          payload: |
-                            {
-                                "text": "New LinkedIn comment from {{ trigger.actorUrn }}: {{ trigger.commentText }}"
-                            }
-                    triggers:
-                        - id: new_comment_trigger
-                          type: io.kestra.plugin.linkedin.CommentTrigger
-                          accessToken: "{{ outputs.authenticate.accessToken }}"
-                          postUrns:
-                            - "urn:li:activity:7374025671234244609"
-                          interval: PT30M
-                """),
-        @Example(title = "Monitor multiple posts for comments",
-                 code = """
-                    triggers:
-                        - id: multi_post_comments
-                          type: io.kestra.plugin.linkedin.CommentTrigger
-                          accessToken: "{{ secret('LINKEDIN_ACCESS_TOKEN') }}"
-                          postUrns:
-                            - "urn:li:activity:7374025671234244609"
-                            - "urn:li:activity:7374025671234244610"
-                          interval: PT15M
-                """)
-})
+                tasks:
+                  - id: authenticate
+                    type: io.kestra.plugin.linkedin.OAuth2
+                    clientId: "{{ secret('LINKEDIN_CLIENT_ID') }}"
+                    clientSecret: "{{ secret('LINKEDIN_CLIENT_SECRET') }}"
+                    refreshToken: "{{ secret('LINKEDIN_REFRESH_TOKEN') }}"
+
+                  - id: notify_slack
+                    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+                    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+                    payload: |
+                      {
+                        "text": "New LinkedIn comment from {{ trigger.actorUrn }}: {{ trigger.commentText }}"
+                      }
+
+                triggers:
+                  - id: new_comment_trigger
+                    type: io.kestra.plugin.linkedin.CommentTrigger
+                    accessToken: "{{ outputs.authenticate.accessToken }}"
+                    postUrns:
+                      - "urn:li:activity:7374025671234244609"
+                    interval: PT30M
+                """
+        ),
+        @Example(
+            title = "Monitor multiple posts for comments",
+            code = """
+                triggers:
+                  - id: multi_post_comments
+                    type: io.kestra.plugin.linkedin.CommentTrigger
+                    accessToken: "{{ secret('LINKEDIN_ACCESS_TOKEN') }}"
+                    postUrns:
+                      - "urn:li:activity:7374025671234244609"
+                      - "urn:li:activity:7374025671234244610"
+                    interval: PT15M
+                """
+        )
+    }
+)
 public class CommentTrigger extends AbstractTrigger
         implements PollingTriggerInterface, TriggerOutput<CommentTrigger.Output> {
 
