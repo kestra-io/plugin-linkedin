@@ -1,0 +1,19 @@
+id: linkedin-comment-trigger-test
+namespace: io.kestra.plugin.linkedin
+
+tasks:
+  - id: notify_slack
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "New LinkedIn comment from {{ trigger.actorUrn }}: {{ trigger.commentText }}"
+      }
+
+triggers:
+  - id: new_comment_trigger
+    type: io.kestra.plugin.linkedin.CommentTrigger
+    accessToken: "{{ secret('LINKEDIN_ACCESS_TOKEN') }}"
+    postUrns:
+      - "urn:li:ugcPost:7374025671234244609"
+    interval: PT5M
