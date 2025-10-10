@@ -29,7 +29,7 @@ public class AbstractLinkedinTask extends Task {
     @Builder.Default
     protected Property<String> apiVersion = Property.ofValue("202509");
 
-    @Schema(title = "Base API URL", description = "The base api url of the linkedin")
+    @Schema(title = "Base API URL", description = "The base API URL of the linkedin")
     @Builder.Default
     protected Property<String> apiBaseUrl = Property.ofValue("https://api.linkedin.com/rest");
 

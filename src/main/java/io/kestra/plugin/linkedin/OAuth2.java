@@ -29,8 +29,8 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Authenticate with LinkedIn using OAuth2",
-    description = "This task allows you to authenticate with LinkedIn API using OAuth2 refresh token flow to obtain an access token for making authenticated requests to LinkedIn's REST API."
+    title = "Authenticate with LinkedIn using OAuth2.",
+    description = "This task authenticates with LinkedIn using the OAuth2 refresh token flow, obtaining an access token that enables secure requests to LinkedIn’s REST API."
 )
 @Plugin(
     examples = {

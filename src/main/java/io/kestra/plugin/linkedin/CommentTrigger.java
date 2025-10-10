@@ -35,8 +35,8 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Trigger on new LinkedIn comments",
-    description = "Monitors LinkedIn posts for new comments and triggers executions when found. This trigger polls LinkedIn's API at regular intervals to detect new comments on specified posts and can trigger downstream tasks like notifications."
+    title = "Trigger on new LinkedIn comments.",
+    description = "Monitor LinkedIn posts for new comments and trigger executions when found. This trigger polls LinkedIn's API at regular intervals to detect new comments on specified posts and can trigger downstream tasks like notifications."
 )
 @Plugin(
     examples = {

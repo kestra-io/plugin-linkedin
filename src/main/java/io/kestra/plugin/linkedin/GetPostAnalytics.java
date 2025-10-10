@@ -26,7 +26,7 @@ import java.util.*;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Get LinkedIn Post Analytics (Reactions)",
+    title = "Get LinkedIn Post Analytics (Reactions).",
     description = "Retrieve detailed reactions analytics for one or more LinkedIn posts/activities including reaction types, counts, and actor information"
 )
 @Plugin(
