@@ -1,0 +1,8 @@
+group: io.kestra.plugin.linkedin
+name: "linkedin"
+title: "LinkedIn"
+description: "A plugin to show how to build a plugin in Kestra."
+body: ""
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"
