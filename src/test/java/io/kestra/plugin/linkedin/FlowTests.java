@@ -2,8 +2,8 @@ package io.kestra.plugin.linkedin;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.runners.TestRunner;
+import io.kestra.core.runners.TestRunnerUtils;
 import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +21,7 @@ class FlowTests {
     protected TestRunner runner;
 
     @Inject
-    protected RunnerUtils runnerUtils;
+    protected TestRunnerUtils runnerUtils;
 
     @Inject
     protected LocalFlowRepositoryLoader repositoryLoader;
