@@ -1,8 +1,8 @@
 group: io.kestra.plugin.linkedin
 name: "linkedin"
 title: "LinkedIn"
-description: "A plugin to show how to build a plugin in Kestra."
-body: ""
+description: "Tasks that authenticate with LinkedIn and fetch post analytics or comment triggers."
+body: "Use OAuth2 credentials to obtain LinkedIn access tokens, poll for new comments, and retrieve analytics for organization posts; configure organization URNs, post IDs, and auth secrets to drive social reporting workflows."
 videos: []
 createdBy: "Kestra Core Team"
 managedBy: "Kestra Core Team"
