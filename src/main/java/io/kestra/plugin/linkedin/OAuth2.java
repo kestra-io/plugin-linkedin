@@ -29,8 +29,8 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Authenticate with LinkedIn using OAuth2.",
-    description = "This task authenticates with LinkedIn using the OAuth2 refresh token flow, obtaining an access token that enables secure requests to LinkedIn’s REST API."
+    title = "Refresh LinkedIn OAuth2 token",
+    description = "Exchanges a LinkedIn OAuth2 refresh token for a new access token using the refresh_token grant. Uses the LinkedIn token endpoint by default and returns expiry metadata for downstream requests."
 )
 @Plugin(
     examples = {
@@ -52,19 +52,19 @@ import java.util.Map;
     }
 )       
 public class OAuth2 extends Task implements RunnableTask<OAuth2.Output> {
-        @Schema(title = "The OAuth2 Client ID", description = "OAuth2 client ID from LinkedIn Developer Portal")
+        @Schema(title = "OAuth2 Client ID", description = "OAuth2 client ID from LinkedIn Developer Portal")
         @NotNull
         private Property<String> clientId;
 
-        @Schema(title = "The OAuth2 Client Secret", description = "OAuth2 client secret from LinkedIn Developer Portal")
+        @Schema(title = "OAuth2 Client Secret", description = "OAuth2 client secret from LinkedIn Developer Portal")
         @NotNull
         private Property<String> clientSecret;
 
-        @Schema(title = "The OAuth2 Refresh Token", description = "Refresh token obtained during the initial authorization flow")
+        @Schema(title = "OAuth2 Refresh Token", description = "Refresh token obtained during the initial authorization flow")
         @NotNull
         private Property<String> refreshToken;
 
-        @Schema(title = "Token endpoint URL", description = "The LinkedIn OAuth2 token endpoint URL")
+        @Schema(title = "Token endpoint URL", description = "LinkedIn OAuth2 token endpoint; defaults to `https://www.linkedin.com/oauth/v2/accessToken`")
         @Builder.Default
         private Property<String> tokenUrl = Property.ofValue("https://www.linkedin.com/oauth/v2/accessToken");
 

@@ -26,8 +26,8 @@ import java.util.*;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Get LinkedIn Post Analytics (Reactions).",
-    description = "Retrieve detailed reactions analytics for one or more LinkedIn posts/activities including reaction types, counts, and actor information"
+    title = "Fetch LinkedIn post reactions",
+    description = "Retrieves reactions for one or more LinkedIn activity URNs using the REST reactions endpoint. Returns per-post totals, reaction breakdown, and actor metadata; uses LinkedIn-Version 202509 and X-Restli-Protocol-Version 2.0.0."
 )
 @Plugin(
     examples = {
@@ -56,7 +56,7 @@ import java.util.*;
 )
 public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTask<GetPostAnalytics.Output> {
 
-    @Schema(title = "Activity URNs", description = "List of LinkedIn activity URNs to get reactions analytics for")
+    @Schema(title = "Activity URNs", description = "List of LinkedIn activity URNs to fetch reactions for")
     @NotNull
     private Property<List<String>> activityUrns;
 

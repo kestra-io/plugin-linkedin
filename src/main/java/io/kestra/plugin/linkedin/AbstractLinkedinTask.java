@@ -17,19 +17,19 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class AbstractLinkedinTask extends Task {
 
-    @Schema(title = "Access Token", description = "The OAuth2 access token for LinkedIn API authentication")
+    @Schema(title = "Access Token", description = "OAuth2 access token sent as Bearer auth for LinkedIn REST API calls")
     @NotNull
     protected Property<String> accessToken;
 
-    @Schema(title = "Application Name", description = "Name of the application making the request")
+    @Schema(title = "Application Name", description = "Application identifier included in requests; defaults to `kestra-linkedin-plugin`")
     @Builder.Default
     protected Property<String> applicationName = Property.ofValue("kestra-linkedin-plugin");
 
-    @Schema(title = "LinkedIn API Version", description = "LinkedIn API version to use")
+    @Schema(title = "LinkedIn API Version", description = "LinkedIn-Version header value; defaults to 202509")
     @Builder.Default
     protected Property<String> apiVersion = Property.ofValue("202509");
 
-    @Schema(title = "Base API URL", description = "The base API URL of the linkedin")
+    @Schema(title = "Base API URL", description = "LinkedIn REST base URL; defaults to `https://api.linkedin.com/rest`")
     @Builder.Default
     protected Property<String> apiBaseUrl = Property.ofValue("https://api.linkedin.com/rest");
 
