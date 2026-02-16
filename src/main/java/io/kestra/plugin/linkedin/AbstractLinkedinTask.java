@@ -21,7 +21,7 @@ public class AbstractLinkedinTask extends Task {
     @NotNull
     protected Property<String> accessToken;
 
-    @Schema(title = "Application Name", description = "Application identifier included in requests; defaults to kestra-linkedin-plugin")
+    @Schema(title = "Application Name", description = "Application identifier included in requests; defaults to `kestra-linkedin-plugin`")
     @Builder.Default
     protected Property<String> applicationName = Property.ofValue("kestra-linkedin-plugin");
 
@@ -29,7 +29,7 @@ public class AbstractLinkedinTask extends Task {
     @Builder.Default
     protected Property<String> apiVersion = Property.ofValue("202509");
 
-    @Schema(title = "Base API URL", description = "LinkedIn REST base URL; defaults to https://api.linkedin.com/rest")
+    @Schema(title = "Base API URL", description = "LinkedIn REST base URL; defaults to `https://api.linkedin.com/rest`")
     @Builder.Default
     protected Property<String> apiBaseUrl = Property.ofValue("https://api.linkedin.com/rest");
 
