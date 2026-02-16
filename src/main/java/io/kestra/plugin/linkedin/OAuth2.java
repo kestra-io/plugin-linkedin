@@ -64,7 +64,7 @@ public class OAuth2 extends Task implements RunnableTask<OAuth2.Output> {
         @NotNull
         private Property<String> refreshToken;
 
-        @Schema(title = "Token endpoint URL", description = "LinkedIn OAuth2 token endpoint; defaults to https://www.linkedin.com/oauth/v2/accessToken")
+        @Schema(title = "Token endpoint URL", description = "LinkedIn OAuth2 token endpoint; defaults to `https://www.linkedin.com/oauth/v2/accessToken`")
         @Builder.Default
         private Property<String> tokenUrl = Property.ofValue("https://www.linkedin.com/oauth/v2/accessToken");
 
