@@ -35,8 +35,8 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Trigger on new LinkedIn comments.",
-    description = "Monitor LinkedIn posts for new comments and trigger executions when found. This trigger polls LinkedIn's API at regular intervals to detect new comments on specified posts and can trigger downstream tasks like notifications."
+    title = "Trigger on new LinkedIn comments",
+    description = "Polls LinkedIn posts for newly created comments and starts an execution when found. Uses bearer access token, LinkedIn-Version header (default 202509), and X-Restli-Protocol-Version 2.0.0 on each poll." 
 )
 @Plugin(
     examples = {
@@ -48,12 +48,6 @@ import java.util.Optional;
                 namespace: company.team
 
                 tasks:
-                  - id: authenticate
-                    type: io.kestra.plugin.linkedin.OAuth2
-                    clientId: "{{ secret('LINKEDIN_CLIENT_ID') }}"
-                    clientSecret: "{{ secret('LINKEDIN_CLIENT_SECRET') }}"
-                    refreshToken: "{{ secret('LINKEDIN_REFRESH_TOKEN') }}"
-
                   - id: notify_slack
                     type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
                     url: "{{ secret('SLACK_WEBHOOK_URL') }}"
@@ -65,7 +59,7 @@ import java.util.Optional;
                 triggers:
                   - id: new_comment_trigger
                     type: io.kestra.plugin.linkedin.CommentTrigger
-                    accessToken: "{{ outputs.authenticate.accessToken }}"
+                    accessToken: "{{ secret('LINKEDIN_ACCESS_TOKEN') }}"
                     postUrns:
                       - "urn:li:activity:7374025671234244609"
                     interval: PT30M
@@ -89,7 +83,7 @@ import java.util.Optional;
 public class CommentTrigger extends AbstractTrigger
         implements PollingTriggerInterface, TriggerOutput<CommentTrigger.Output> {
 
-    @Schema(title = "Access Token", description = "The OAuth2 access token for LinkedIn API authentication")
+    @Schema(title = "Access Token", description = "OAuth2 access token sent as Bearer auth for LinkedIn REST API")
     @NotNull
     private Property<String> accessToken;
 
@@ -102,11 +96,11 @@ public class CommentTrigger extends AbstractTrigger
     @Builder.Default
     private Duration interval = Duration.ofMinutes(30);
 
-    @Schema(title = "LinkedIn API Version", description = "LinkedIn API version header")
+    @Schema(title = "LinkedIn API Version", description = "LinkedIn-Version header value; defaults to 202509")
     @Builder.Default
     private Property<String> linkedinVersion = Property.ofValue("202509");
 
-    @Schema(title = "Application Name", description = "Name of the application making the request")
+    @Schema(title = "Application Name", description = "Application identifier included in requests; defaults to kestra-linkedin-plugin")
     @Builder.Default
     private Property<String> applicationName = Property.ofValue("kestra-linkedin-plugin");
 
