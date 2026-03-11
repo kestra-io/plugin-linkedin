@@ -1,24 +1,26 @@
 package io.kestra.plugin.linkedin;
 
-import io.kestra.core.serializers.JacksonMapper;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+
 import com.fasterxml.jackson.databind.JsonNode;
+
+import io.kestra.core.http.HttpRequest;
+import io.kestra.core.http.HttpResponse;
+import io.kestra.core.http.client.HttpClient;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.http.client.HttpClient;
-import io.kestra.core.http.HttpRequest;
-import io.kestra.core.http.HttpResponse;
+import io.kestra.core.serializers.JacksonMapper;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
 
 @SuperBuilder
 @ToString
@@ -71,14 +73,14 @@ public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTa
                     String encodedUrn = URLEncoder.encode(activityUrn, StandardCharsets.UTF_8);
 
                     String finalUrl = getLinkedinApiBaseUrl(runContext) + "/reactions/(entity:" + encodedUrn
-                            + ")?q=entity&sort=(value:REVERSE_CHRONOLOGICAL)";
+                        + ")?q=entity&sort=(value:REVERSE_CHRONOLOGICAL)";
 
                     HttpRequest request = HttpRequest.builder()
-                            .uri(URI.create(finalUrl))
-                            .method("GET")
-                            .addHeader("LinkedIn-Version", "202509")
-                            .addHeader("X-Restli-Protocol-Version", "2.0.0")
-                            .build();
+                        .uri(URI.create(finalUrl))
+                        .method("GET")
+                        .addHeader("LinkedIn-Version", "202509")
+                        .addHeader("X-Restli-Protocol-Version", "2.0.0")
+                        .build();
                     HttpResponse<String> response = httpClient.request(request, String.class);
 
                     String responseBody = response.getBody();
@@ -89,28 +91,30 @@ public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTa
 
                 } catch (Exception e) {
                     runContext.logger().error("Failed to retrieve reactions for URN: {}", activityUrn, e);
-                    results.add(PostReactionsData.builder()
+                    results.add(
+                        PostReactionsData.builder()
                             .activityUrn(activityUrn)
                             .totalReactions(0)
                             .reactions(new ArrayList<>())
                             .reactionsSummary(new HashMap<>())
                             .error("Failed: " + e.getMessage())
-                            .build());
+                            .build()
+                    );
                     throw new RuntimeException("Failed to retrieve reactions for: " + activityUrn, e);
                 }
             }
         }
         return Output.builder()
-                .posts(results)
-                .totalPosts(results.size())
-                .totalReactions(results.stream().mapToInt(PostReactionsData::getTotalReactions).sum())
-                .build();
+            .posts(results)
+            .totalPosts(results.size())
+            .totalReactions(results.stream().mapToInt(PostReactionsData::getTotalReactions).sum())
+            .build();
     }
 
     private PostReactionsData parsePostReactions(String activityUrn, JsonNode jsonResponse) {
         List<ReactionData> reactions = new ArrayList<>();
         Map<String, Integer> reactionsSummary = new HashMap<>();
-        int totalReactions ;
+        int totalReactions;
 
         if (jsonResponse.has("elements")) {
             JsonNode elements = jsonResponse.get("elements");
@@ -133,11 +137,11 @@ public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTa
         }
 
         return PostReactionsData.builder()
-                .activityUrn(activityUrn)
-                .totalReactions(totalReactions)
-                .reactions(reactions)
-                .reactionsSummary(reactionsSummary)
-                .build();
+            .activityUrn(activityUrn)
+            .totalReactions(totalReactions)
+            .reactions(reactions)
+            .reactionsSummary(reactionsSummary)
+            .build();
     }
 
     private ReactionData parseReactionElement(JsonNode reactionObj) {

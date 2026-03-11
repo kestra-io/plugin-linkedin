@@ -1,16 +1,18 @@
 package io.kestra.plugin.linkedin;
 
+import java.util.Map;
+import java.util.Objects;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.TestRunner;
 import io.kestra.core.runners.TestRunnerUtils;
+
 import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.util.Map;
-import java.util.Objects;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -44,25 +46,30 @@ class FlowTests {
     void testLinkedinOAuth2Flow() {
         try {
             var execution = runnerUtils.runOne(
-                    null,
-                    "io.kestra.plugin.linkedin",
-                    "linkedin-oauth2-test",
-                    null,
-                    (f, e) -> Map.of(
-                            "vars", Map.of("linkedin_base_url", server.getURI().toString())));
+                null,
+                "io.kestra.plugin.linkedin",
+                "linkedin-oauth2-test",
+                null,
+                (f, e) -> Map.of(
+                    "vars", Map.of("linkedin_base_url", server.getURI().toString())
+                )
+            );
 
             assertThat(execution, notNullValue());
             assertThat(execution.getTaskRunList(), not(empty()));
 
             var hasAuthenticateTask = execution.getTaskRunList().stream()
-                    .anyMatch(taskRun -> "authenticate".equals(taskRun.getTaskId()));
+                .anyMatch(taskRun -> "authenticate".equals(taskRun.getTaskId()));
             assertThat(hasAuthenticateTask, is(true));
 
         } catch (Exception e) {
-            assertThat(e.getMessage(), anyOf(
+            assertThat(
+                e.getMessage(), anyOf(
                     containsString("Flow not found"),
                     containsString("linkedin-oauth2-test"),
-                    containsString("authenticate")));
+                    containsString("authenticate")
+                )
+            );
         }
     }
 
@@ -70,12 +77,14 @@ class FlowTests {
     void testLinkedinPostAnalyticsFlow() {
         try {
             var execution = runnerUtils.runOne(
-                    null,
-                    "io.kestra.plugin.linkedin",
-                    "linkedin-post-analytics-test",
-                    null,
-                    (f, e) -> Map.of(
-                            "vars", Map.of("linkedin_base_url", server.getURI().toString())));
+                null,
+                "io.kestra.plugin.linkedin",
+                "linkedin-post-analytics-test",
+                null,
+                (f, e) -> Map.of(
+                    "vars", Map.of("linkedin_base_url", server.getURI().toString())
+                )
+            );
 
             assertThat(execution, notNullValue());
             assertThat(execution.getTaskRunList(), not(empty()));
@@ -83,11 +92,14 @@ class FlowTests {
             assertThat(execution.getTaskRunList().size(), greaterThanOrEqualTo(1));
 
         } catch (Exception e) {
-            assertThat(e.getMessage(), anyOf(
+            assertThat(
+                e.getMessage(), anyOf(
                     containsString("Flow not found"),
                     containsString("linkedin-post-analytics-test"),
                     containsString("authenticate"),
-                    containsString("get_analytics")));
+                    containsString("get_analytics")
+                )
+            );
         }
     }
 
@@ -95,21 +107,26 @@ class FlowTests {
     void testLinkedinCommentTriggerFlow() {
         try {
             var execution = runnerUtils.runOne(
-                    null,
-                    "io.kestra.plugin.linkedin",
-                    "linkedin-comment-trigger-test",
-                    null,
-                    (f, e) -> Map.of(
-                            "vars", Map.of("linkedin_base_url", server.getURI().toString())));
+                null,
+                "io.kestra.plugin.linkedin",
+                "linkedin-comment-trigger-test",
+                null,
+                (f, e) -> Map.of(
+                    "vars", Map.of("linkedin_base_url", server.getURI().toString())
+                )
+            );
 
             assertThat(execution, notNullValue());
 
         } catch (Exception e) {
-            assertThat(e.getMessage(), anyOf(
+            assertThat(
+                e.getMessage(), anyOf(
                     containsString("Flow not found"),
                     containsString("linkedin-comment-trigger-test"),
                     containsString("notify_slack"),
-                    containsString("trigger")));
+                    containsString("trigger")
+                )
+            );
         }
     }
 
@@ -124,11 +141,12 @@ class FlowTests {
     void testOAuth2TaskStructure() {
         try {
             var execution = runnerUtils.runOne(
-                    null,
-                    "io.kestra.plugin.linkedin",
-                    "linkedin-oauth2-test",
-                    null,
-                    (f, e) -> Map.of());
+                null,
+                "io.kestra.plugin.linkedin",
+                "linkedin-oauth2-test",
+                null,
+                (f, e) -> Map.of()
+            );
 
             assertThat(execution, notNullValue());
             if (!execution.getTaskRunList().isEmpty()) {
@@ -145,11 +163,12 @@ class FlowTests {
     void testPostAnalyticsTaskStructure() {
         try {
             var execution = runnerUtils.runOne(
-                    null,
-                    "io.kestra.plugin.linkedin",
-                    "linkedin-post-analytics-test",
-                    null,
-                    (f, e) -> Map.of());
+                null,
+                "io.kestra.plugin.linkedin",
+                "linkedin-post-analytics-test",
+                null,
+                (f, e) -> Map.of()
+            );
 
             assertThat(execution, notNullValue());
 
@@ -162,11 +181,12 @@ class FlowTests {
     void testTriggerFlowStructure() {
         try {
             var execution = runnerUtils.runOne(
-                    null,
-                    "io.kestra.plugin.linkedin",
-                    "linkedin-comment-trigger-test",
-                    null,
-                    (f, e) -> Map.of());
+                null,
+                "io.kestra.plugin.linkedin",
+                "linkedin-comment-trigger-test",
+                null,
+                (f, e) -> Map.of()
+            );
 
             assertThat(execution, notNullValue());
 
@@ -179,16 +199,20 @@ class FlowTests {
     void testErrorHandling() {
         try {
             runnerUtils.runOne(
-                    null,
-                    "io.kestra.plugin.linkedin",
-                    "non-existent-flow",
-                    null,
-                    (f, e) -> Map.of());
+                null,
+                "io.kestra.plugin.linkedin",
+                "non-existent-flow",
+                null,
+                (f, e) -> Map.of()
+            );
         } catch (Exception e) {
-            assertThat(e.getMessage(), anyOf(
+            assertThat(
+                e.getMessage(), anyOf(
                     containsString("Flow not found"),
                     containsString("non-existent-flow"),
-                    nullValue()));
+                    nullValue()
+                )
+            );
         }
 
         assertThat(true, is(true));

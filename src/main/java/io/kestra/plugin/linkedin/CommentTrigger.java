@@ -1,25 +1,5 @@
 package io.kestra.plugin.linkedin;
 
-import io.kestra.core.serializers.JacksonMapper;
-import com.fasterxml.jackson.databind.JsonNode;
-import io.kestra.core.models.annotations.Example;
-import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.http.client.HttpClient;
-import io.kestra.core.http.client.configurations.BearerAuthConfiguration;
-import io.kestra.core.http.client.configurations.HttpConfiguration;
-import io.kestra.core.http.HttpResponse;
-import io.kestra.core.http.HttpRequest;
-import io.kestra.core.models.triggers.*;
-import io.kestra.core.runners.RunContext;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
-
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -29,6 +9,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
+import io.kestra.core.http.HttpRequest;
+import io.kestra.core.http.HttpResponse;
+import io.kestra.core.http.client.HttpClient;
+import io.kestra.core.http.client.configurations.BearerAuthConfiguration;
+import io.kestra.core.http.client.configurations.HttpConfiguration;
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.triggers.*;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
+
 @SuperBuilder
 @ToString
 @EqualsAndHashCode
@@ -36,7 +38,7 @@ import java.util.Optional;
 @NoArgsConstructor
 @Schema(
     title = "Trigger on new LinkedIn comments",
-    description = "Polls LinkedIn posts for newly created comments and starts an execution when found. Uses bearer access token, LinkedIn-Version header (default 202509), and X-Restli-Protocol-Version 2.0.0 on each poll." 
+    description = "Polls LinkedIn posts for newly created comments and starts an execution when found. Uses bearer access token, LinkedIn-Version header (default 202509), and X-Restli-Protocol-Version 2.0.0 on each poll."
 )
 @Plugin(
     examples = {
@@ -81,7 +83,7 @@ import java.util.Optional;
     }
 )
 public class CommentTrigger extends AbstractTrigger
-        implements PollingTriggerInterface, TriggerOutput<CommentTrigger.Output> {
+    implements PollingTriggerInterface, TriggerOutput<CommentTrigger.Output> {
 
     @Schema(title = "Access Token", description = "OAuth2 access token sent as Bearer auth for LinkedIn REST API")
     @NotNull
@@ -117,10 +119,12 @@ public class CommentTrigger extends AbstractTrigger
         String rLinkedinVersion = runContext.render(this.linkedinVersion).as(String.class).orElse("202509");
 
         HttpConfiguration httpConfiguration = HttpConfiguration.builder()
-                .auth(BearerAuthConfiguration.builder()
-                        .token(Property.ofValue(rAccessToken))
-                        .build())
-                .build();
+            .auth(
+                BearerAuthConfiguration.builder()
+                    .token(Property.ofValue(rAccessToken))
+                    .build()
+            )
+            .build();
         List<String> postsToMonitor = new ArrayList<>();
 
         postsToMonitor.addAll(rPostUrns);
@@ -128,25 +132,27 @@ public class CommentTrigger extends AbstractTrigger
         runContext.logger().info("Checking for new comments on {} posts", postsToMonitor.size());
 
         Instant lastCheckTime = context.getNextExecutionDate() != null
-                ? context.getNextExecutionDate().toInstant().minus(this.interval)
-                : Instant.now().minus(this.interval);
+            ? context.getNextExecutionDate().toInstant().minus(this.interval)
+            : Instant.now().minus(this.interval);
 
         List<CommentData> newComments = new ArrayList<>();
 
-        try (HttpClient httpClient = HttpClient.builder()
+        try (
+            HttpClient httpClient = HttpClient.builder()
                 .runContext(runContext)
                 .configuration(httpConfiguration)
-                .build()) {
+                .build()
+        ) {
             for (String postUrn : postsToMonitor) {
                 String encodedUrn = URLEncoder.encode(postUrn, StandardCharsets.UTF_8);
                 String apiUrl = "https://api.linkedin.com/rest/socialActions/" + encodedUrn + "/comments";
 
                 HttpRequest request = HttpRequest.builder()
-                        .uri(URI.create(apiUrl))
-                        .method("GET")
-                        .addHeader("LinkedIn-Version", rLinkedinVersion)
-                        .addHeader("X-Restli-Protocol-Version", "2.0.0")
-                        .build();
+                    .uri(URI.create(apiUrl))
+                    .method("GET")
+                    .addHeader("LinkedIn-Version", rLinkedinVersion)
+                    .addHeader("X-Restli-Protocol-Version", "2.0.0")
+                    .build();
 
                 HttpResponse<String> response = httpClient.request(request, String.class);
                 String responseBody = response.getBody();
@@ -175,20 +181,20 @@ public class CommentTrigger extends AbstractTrigger
 
             // Get the most recent comment for the output
             CommentData latest = newComments.stream()
-                    .max((c1, c2) -> c1.getCreatedTime().compareTo(c2.getCreatedTime()))
-                    .orElse(newComments.getFirst());
+                .max((c1, c2) -> c1.getCreatedTime().compareTo(c2.getCreatedTime()))
+                .orElse(newComments.getFirst());
 
             Output output = Output.builder()
-                    .postUrn(latest.getPostUrn())
-                    .commentId(latest.getCommentId())
-                    .commentUrn(latest.getCommentUrn())
-                    .commentText(latest.getCommentText())
-                    .actorUrn(latest.getActorUrn())
-                    .agentUrn(latest.getAgentUrn())
-                    .createdTime(latest.getCreatedTime())
-                    .newCommentsCount(newComments.size())
-                    .allNewComments(newComments)
-                    .build();
+                .postUrn(latest.getPostUrn())
+                .commentId(latest.getCommentId())
+                .commentUrn(latest.getCommentUrn())
+                .commentText(latest.getCommentText())
+                .actorUrn(latest.getActorUrn())
+                .agentUrn(latest.getAgentUrn())
+                .createdTime(latest.getCreatedTime())
+                .newCommentsCount(newComments.size())
+                .allNewComments(newComments)
+                .build();
 
             Execution execution = TriggerService.generateExecution(this, conditionContext, context, output);
             return Optional.of(execution);
@@ -225,14 +231,14 @@ public class CommentTrigger extends AbstractTrigger
         String agentUrn = commentObj.has("agent") ? commentObj.get("agent").asText() : null;
 
         return CommentData.builder()
-                .postUrn(postUrn)
-                .commentId(commentId)
-                .commentUrn(commentUrn)
-                .commentText(commentText)
-                .actorUrn(actorUrn)
-                .agentUrn(agentUrn)
-                .createdTime(createdTime)
-                .build();
+            .postUrn(postUrn)
+            .commentId(commentId)
+            .commentUrn(commentUrn)
+            .commentText(commentText)
+            .actorUrn(actorUrn)
+            .agentUrn(agentUrn)
+            .createdTime(createdTime)
+            .build();
     }
 
     @Builder

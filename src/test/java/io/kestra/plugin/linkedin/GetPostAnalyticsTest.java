@@ -1,15 +1,17 @@
 package io.kestra.plugin.linkedin;
 
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.runners.RunContextFactory;
-import io.micronaut.runtime.server.EmbeddedServer;
-import jakarta.inject.Inject;
+import java.util.List;
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.Map;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContextFactory;
+
+import io.micronaut.runtime.server.EmbeddedServer;
+import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -34,10 +36,10 @@ class GetPostAnalyticsTest {
         String activityUrn = "urn:li:activity:123456789";
 
         GetPostAnalytics task = GetPostAnalytics.builder()
-                .accessToken(Property.ofValue("test-access-token"))
-                .apiBaseUrl(Property.ofValue(baseUrl))
-                .activityUrns(Property.ofValue(List.of(activityUrn)))
-                .build();
+            .accessToken(Property.ofValue("test-access-token"))
+            .apiBaseUrl(Property.ofValue(baseUrl))
+            .activityUrns(Property.ofValue(List.of(activityUrn)))
+            .build();
 
         var runContext = runContextFactory.of(Map.of());
         var out = task.run(runContext);
@@ -50,9 +52,12 @@ class GetPostAnalyticsTest {
         assertThat(post.getActivityUrn(), equalTo(activityUrn));
         assertThat(post.getTotalReactions(), equalTo(2));
         assertThat(post.getReactions(), hasSize(2));
-        assertThat(post.getReactionsSummary(), allOf(
+        assertThat(
+            post.getReactionsSummary(), allOf(
                 hasEntry("LIKE", 1),
-                hasEntry("CELEBRATE", 1)));
+                hasEntry("CELEBRATE", 1)
+            )
+        );
 
         var r1 = post.getReactions().getFirst();
         assertThat(r1.getReactionId(), equalTo("r1"));

@@ -1,10 +1,11 @@
 package io.kestra.plugin.linkedin;
 
+import io.kestra.core.http.client.*;
+import io.kestra.core.http.client.configurations.*;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.http.client.*;
-import io.kestra.core.http.client.configurations.*;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -37,14 +38,16 @@ public class AbstractLinkedinTask extends Task {
         String rAccessToken = runContext.render(this.accessToken).as(String.class).orElseThrow();
 
         HttpConfiguration httpConfiguration = HttpConfiguration.builder()
-                .auth(BearerAuthConfiguration.builder()
-                        .token(Property.ofValue(rAccessToken))
-                        .build())
-                .build();
+            .auth(
+                BearerAuthConfiguration.builder()
+                    .token(Property.ofValue(rAccessToken))
+                    .build()
+            )
+            .build();
         return HttpClient.builder()
-                .runContext(runContext)
-                .configuration(httpConfiguration)
-                .build();
+            .runContext(runContext)
+            .configuration(httpConfiguration)
+            .build();
     }
 
     protected String getLinkedinApiBaseUrl(RunContext runContext) throws Exception {

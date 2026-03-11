@@ -1,16 +1,18 @@
 package io.kestra.plugin.linkedin;
 
+import java.util.Map;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import io.micronaut.runtime.server.EmbeddedServer;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
+import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Inject;
-import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -37,11 +39,11 @@ class OAuth2Test {
         RunContext runContext = runContextFactory.of(Map.of());
 
         OAuth2 task = OAuth2.builder()
-                .clientId(Property.ofValue("test-client-id"))
-                .clientSecret(Property.ofValue("test-client-secret"))
-                .refreshToken(Property.ofValue("test-refresh-token"))
-                .tokenUrl(Property.ofValue(tokenEndpoint))
-                .build();
+            .clientId(Property.ofValue("test-client-id"))
+            .clientSecret(Property.ofValue("test-client-secret"))
+            .refreshToken(Property.ofValue("test-refresh-token"))
+            .tokenUrl(Property.ofValue(tokenEndpoint))
+            .build();
 
         OAuth2.Output out = task.run(runContext);
         assertThat(out, notNullValue());
@@ -52,45 +54,54 @@ class OAuth2Test {
 
     @Test
     void testOAuth2FlowMissingClientId() throws Exception {
-        RunContext runContext = runContextFactory.of(Map.of(
+        RunContext runContext = runContextFactory.of(
+            Map.of(
                 "clientSecret", "test-client-secret",
-                "refreshToken", "test-refresh-token"));
+                "refreshToken", "test-refresh-token"
+            )
+        );
 
         OAuth2 task = OAuth2.builder()
-                .clientId(Property.ofValue("{{ clientId }}"))
-                .clientSecret(Property.ofValue("{{ clientSecret }}"))
-                .refreshToken(Property.ofValue("{{ refreshToken }}"))
-                .build();
+            .clientId(Property.ofValue("{{ clientId }}"))
+            .clientSecret(Property.ofValue("{{ clientSecret }}"))
+            .refreshToken(Property.ofValue("{{ refreshToken }}"))
+            .build();
 
         assertThrows(Exception.class, () -> task.run(runContext));
     }
 
     @Test
     void testOAuth2FlowMissingClientSecret() throws Exception {
-        RunContext runContext = runContextFactory.of(Map.of(
+        RunContext runContext = runContextFactory.of(
+            Map.of(
                 "clientId", "test-client-id",
-                "refreshToken", "test-refresh-token"));
+                "refreshToken", "test-refresh-token"
+            )
+        );
 
         OAuth2 task = OAuth2.builder()
-                .clientId(Property.ofValue("{{ clientId }}"))
-                .clientSecret(Property.ofValue("{{ clientSecret }}"))
-                .refreshToken(Property.ofValue("{{ refreshToken }}"))
-                .build();
+            .clientId(Property.ofValue("{{ clientId }}"))
+            .clientSecret(Property.ofValue("{{ clientSecret }}"))
+            .refreshToken(Property.ofValue("{{ refreshToken }}"))
+            .build();
 
         assertThrows(Exception.class, () -> task.run(runContext));
     }
 
     @Test
     void testOAuth2FlowMissingRefreshToken() throws Exception {
-        RunContext runContext = runContextFactory.of(Map.of(
+        RunContext runContext = runContextFactory.of(
+            Map.of(
                 "clientId", "test-client-id",
-                "clientSecret", "test-client-secret"));
+                "clientSecret", "test-client-secret"
+            )
+        );
 
         OAuth2 task = OAuth2.builder()
-                .clientId(Property.ofValue("{{ clientId }}"))
-                .clientSecret(Property.ofValue("{{ clientSecret }}"))
-                .refreshToken(Property.ofValue("{{ refreshToken }}"))
-                .build();
+            .clientId(Property.ofValue("{{ clientId }}"))
+            .clientSecret(Property.ofValue("{{ clientSecret }}"))
+            .refreshToken(Property.ofValue("{{ refreshToken }}"))
+            .build();
 
         assertThrows(Exception.class, () -> task.run(runContext));
     }
@@ -99,10 +110,10 @@ class OAuth2Test {
     void testTaskBuilderDefaults() throws IllegalVariableEvaluationException {
         RunContext runContext = runContextFactory.of(Map.of());
         OAuth2 task = OAuth2.builder()
-                .clientId(Property.ofValue("test-client-id"))
-                .clientSecret(Property.ofValue("test-client-secret"))
-                .refreshToken(Property.ofValue("test-refresh-token"))
-                .build();
+            .clientId(Property.ofValue("test-client-id"))
+            .clientSecret(Property.ofValue("test-client-secret"))
+            .refreshToken(Property.ofValue("test-refresh-token"))
+            .build();
 
         String tokenUrl = runContext.render(task.getTokenUrl()).as(String.class).orElse(null);
         assertThat(tokenUrl, equalTo("https://www.linkedin.com/oauth/v2/accessToken"));
