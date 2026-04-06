@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @ToString
@@ -60,6 +61,7 @@ public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTa
 
     @Schema(title = "Activity URNs", description = "List of LinkedIn activity URNs to fetch reactions for")
     @NotNull
+    @PluginProperty(group = "main")
     private Property<List<String>> activityUrns;
 
     @Override
