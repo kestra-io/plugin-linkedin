@@ -87,23 +87,27 @@ public class CommentTrigger extends AbstractTrigger
 
     @Schema(title = "Access Token", description = "OAuth2 access token sent as Bearer auth for LinkedIn REST API")
     @NotNull
+    @PluginProperty(group = "main")
     private Property<String> accessToken;
 
     @Schema(title = "Post URNs", description = "List of LinkedIn post URNs to monitor for new comments")
     @NotNull
+    @PluginProperty(group = "main")
     private Property<List<String>> postUrns;
 
     @Schema(title = "Polling interval", description = "How often to check for new comments")
-    @PluginProperty
+    @PluginProperty(group = "execution")
     @Builder.Default
     private Duration interval = Duration.ofMinutes(30);
 
     @Schema(title = "LinkedIn API Version", description = "LinkedIn-Version header value; defaults to 202509")
     @Builder.Default
+    @PluginProperty(group = "advanced")
     private Property<String> linkedinVersion = Property.ofValue("202509");
 
     @Schema(title = "Application Name", description = "Application identifier included in requests; defaults to kestra-linkedin-plugin")
     @Builder.Default
+    @PluginProperty(group = "advanced")
     private Property<String> applicationName = Property.ofValue("kestra-linkedin-plugin");
 
     @Override
@@ -276,24 +280,31 @@ public class CommentTrigger extends AbstractTrigger
     @Getter
     public static class CommentData {
         @Schema(title = "Post URN")
+        @PluginProperty(group = "advanced")
         private final String postUrn;
 
         @Schema(title = "Comment ID")
+        @PluginProperty(group = "advanced")
         private final String commentId;
 
         @Schema(title = "Comment URN")
+        @PluginProperty(group = "advanced")
         private final String commentUrn;
 
         @Schema(title = "Comment text")
+        @PluginProperty(group = "advanced")
         private final String commentText;
 
         @Schema(title = "Actor URN")
+        @PluginProperty(group = "advanced")
         private final String actorUrn;
 
         @Schema(title = "Agent URN")
+        @PluginProperty(group = "advanced")
         private final String agentUrn;
 
         @Schema(title = "Created time")
+        @PluginProperty(group = "advanced")
         private final Instant createdTime;
     }
 }
