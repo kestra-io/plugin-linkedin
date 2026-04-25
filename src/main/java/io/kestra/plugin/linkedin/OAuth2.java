@@ -62,12 +62,12 @@ public class OAuth2 extends Task implements RunnableTask<OAuth2.Output> {
 
     @Schema(title = "OAuth2 Client Secret", description = "OAuth2 client secret from LinkedIn Developer Portal")
     @NotNull
-    @PluginProperty(group = "main")
+    @PluginProperty(group = "main", secret = true)
     private Property<String> clientSecret;
 
     @Schema(title = "OAuth2 Refresh Token", description = "Refresh token obtained during the initial authorization flow")
     @NotNull
-    @PluginProperty(group = "main")
+    @PluginProperty(group = "main", secret = true)
     private Property<String> refreshToken;
 
     @Schema(title = "Token endpoint URL", description = "LinkedIn OAuth2 token endpoint; defaults to `https://www.linkedin.com/oauth/v2/accessToken`")
