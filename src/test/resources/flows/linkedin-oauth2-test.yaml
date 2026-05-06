@@ -5,6 +5,6 @@ tasks:
   - id: authenticate
     type: io.kestra.plugin.linkedin.OAuth2
     clientId: "test-client-id"
-    clientSecret: "test-client-secret"
-    refreshToken: "test-refresh-token"
-    tokenUrl: "{{ vars.linkedin_base_url }}/oauth/v2/accessToken"
+    clientSecret: "{{ secret('LINKEDIN_CLIENT_SECRET') }}"
+    refreshToken: "{{ secret('LINKEDIN_REFRESH_TOKEN') }}"
+    tokenUrl: "http://127.0.0.1:65535/oauth/v2/accessToken"

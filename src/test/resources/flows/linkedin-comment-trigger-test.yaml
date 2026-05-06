@@ -4,7 +4,7 @@ namespace: io.kestra.plugin.linkedin
 tasks:
   - id: log_comment
     type: io.kestra.plugin.core.log.Log
-    message: "New LinkedIn comment from {{ trigger.actorUrn }}: {{ trigger.commentText }}"
+    message: "New LinkedIn comment from {{ trigger.actorUrn ?? 'unknown' }}: {{ trigger.commentText ?? 'no text' }}"
 
 triggers:
   - id: new_comment_trigger
