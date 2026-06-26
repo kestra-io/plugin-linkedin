@@ -17,7 +17,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-public class AbstractLinkedinTask extends Task {
+public abstract class AbstractLinkedinTask extends Task {
 
     @Schema(title = "Access Token", description = "OAuth2 access token sent as Bearer auth for LinkedIn REST API calls")
     @NotNull

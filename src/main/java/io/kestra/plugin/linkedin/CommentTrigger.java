@@ -69,7 +69,11 @@ import lombok.experimental.SuperBuilder;
         ),
         @Example(
             title = "Monitor multiple posts for comments",
+            full = true,
             code = """
+                id: linkedin_multi_post_comments
+                namespace: company.team
+
                 triggers:
                   - id: multi_post_comments
                     type: io.kestra.plugin.linkedin.CommentTrigger
