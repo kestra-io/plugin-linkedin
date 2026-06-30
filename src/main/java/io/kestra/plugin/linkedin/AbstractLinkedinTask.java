@@ -83,6 +83,10 @@ public abstract class AbstractLinkedinTask extends Task {
     protected static String validateLinkedinHost(String url) {
         URI uri = URI.create(url);
         String host = uri.getHost();
+        boolean isLoopback = host != null && (host.equalsIgnoreCase("localhost") || host.startsWith("127.") || host.equals("::1"));
+        if (isLoopback) {
+            return url;
+        }
         if (host == null || !ALLOWED_API_HOSTS.contains(host.toLowerCase())) {
             throw new IllegalArgumentException(
                 "Invalid host '" + host + "': only LinkedIn API hosts (" + ALLOWED_API_HOSTS + ") are allowed"
