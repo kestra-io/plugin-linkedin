@@ -92,6 +92,7 @@ public class CommentTrigger extends AbstractTrigger
     @Schema(title = "Access Token", description = "OAuth2 access token sent as Bearer auth for LinkedIn REST API")
     @NotNull
     @PluginProperty(secret = true, group = "main")
+    @ToString.Exclude
     private Property<String> accessToken;
 
     @Schema(title = "Post URNs", description = "List of LinkedIn post URNs to monitor for new comments")
