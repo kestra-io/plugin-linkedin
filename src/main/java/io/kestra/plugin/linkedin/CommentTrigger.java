@@ -69,7 +69,11 @@ import lombok.experimental.SuperBuilder;
         ),
         @Example(
             title = "Monitor multiple posts for comments",
+            full = true,
             code = """
+                id: linkedin_multi_post_comments
+                namespace: company.team
+
                 triggers:
                   - id: multi_post_comments
                     type: io.kestra.plugin.linkedin.CommentTrigger
@@ -88,6 +92,7 @@ public class CommentTrigger extends AbstractTrigger
     @Schema(title = "Access Token", description = "OAuth2 access token sent as Bearer auth for LinkedIn REST API")
     @NotNull
     @PluginProperty(secret = true, group = "main")
+    @ToString.Exclude
     private Property<String> accessToken;
 
     @Schema(title = "Post URNs", description = "List of LinkedIn post URNs to monitor for new comments")

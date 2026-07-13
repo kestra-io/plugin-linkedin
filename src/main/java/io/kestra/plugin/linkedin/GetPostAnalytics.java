@@ -178,8 +178,13 @@ public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTa
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
+        @Schema(title = "Per-post reaction data", description = "Reaction details for each requested activity URN")
         private final List<PostReactionsData> posts;
+
+        @Schema(title = "Total posts processed", description = "Number of activity URNs for which reactions were fetched")
         private final Integer totalPosts;
+
+        @Schema(title = "Total reactions", description = "Sum of reactions across all processed posts")
         private final Integer totalReactions;
     }
 

@@ -63,11 +63,13 @@ public class OAuth2 extends Task implements RunnableTask<OAuth2.Output> {
     @Schema(title = "OAuth2 Client Secret", description = "OAuth2 client secret from LinkedIn Developer Portal")
     @NotNull
     @PluginProperty(group = "main", secret = true)
+    @ToString.Exclude
     private Property<String> clientSecret;
 
     @Schema(title = "OAuth2 Refresh Token", description = "Refresh token obtained during the initial authorization flow")
     @NotNull
     @PluginProperty(group = "main", secret = true)
+    @ToString.Exclude
     private Property<String> refreshToken;
 
     @Schema(title = "Token endpoint URL", description = "LinkedIn OAuth2 token endpoint; defaults to `https://www.linkedin.com/oauth/v2/accessToken`")
@@ -80,8 +82,10 @@ public class OAuth2 extends Task implements RunnableTask<OAuth2.Output> {
         String rClientId = runContext.render(this.clientId).as(String.class).orElseThrow();
         String rClientSecret = runContext.render(this.clientSecret).as(String.class).orElseThrow();
         String rRefreshToken = runContext.render(this.refreshToken).as(String.class).orElseThrow();
-        String rTokenUrl = runContext.render(this.tokenUrl).as(String.class)
-            .orElse("https://www.linkedin.com/oauth/v2/accessToken");
+        String rTokenUrl = AbstractLinkedinTask.validateLinkedinHost(
+            runContext.render(this.tokenUrl).as(String.class)
+                .orElse("https://www.linkedin.com/oauth/v2/accessToken")
+        );
 
         try {
             HttpConfiguration httpConfiguration = HttpConfiguration.builder()
@@ -170,6 +174,7 @@ public class OAuth2 extends Task implements RunnableTask<OAuth2.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(title = "Access Token", description = "OAuth2 access token for LinkedIn API authentication")
+        @PluginProperty(secret = true)
         private final String accessToken;
 
         @Schema(title = "Token Type", description = "Type of the access token (typically 'Bearer')")
