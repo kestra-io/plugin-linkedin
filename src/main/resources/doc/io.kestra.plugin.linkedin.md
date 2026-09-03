@@ -4,7 +4,7 @@ Fetch LinkedIn post analytics and monitor comments from Kestra flows.
 
 ## Authentication
 
-Tasks use a LinkedIn OAuth2 `accessToken` (Bearer token). Use the `OAuth2` task to exchange a `refreshToken` for a fresh access token — set `clientId`, `clientSecret`, and `refreshToken` (all required). The `tokenUrl` defaults to `https://www.linkedin.com/oauth/v2/accessToken`. The output `accessToken` can then be passed to other tasks. Store secrets in [secrets](https://kestra.io/docs/concepts/secret) and apply connection properties globally with [plugin defaults](https://kestra.io/docs/workflow-components/plugin-defaults).
+Tasks use a LinkedIn OAuth2 `accessToken` (Bearer token). Use the `OAuth2` task to exchange a `refreshToken` for a fresh access token — set `clientId`, `clientSecret`, and `refreshToken` (all required). The `tokenUrl` defaults to `https://www.linkedin.com/oauth/v2/accessToken`. The output `accessToken` can then be passed to other tasks. Store secrets in [secrets](https://kestra.io/docs/concepts/secret) and set connection properties on each task.
 
 ## Tasks
 
