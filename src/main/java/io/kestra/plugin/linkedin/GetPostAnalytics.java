@@ -12,6 +12,7 @@ import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.HttpClient;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
@@ -21,7 +22,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @ToString
@@ -30,7 +30,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 @NoArgsConstructor
 @Schema(
     title = "Fetch LinkedIn post reactions",
-    description = "Retrieves reactions for one or more LinkedIn activity URNs using the REST reactions endpoint. Returns per-post totals, reaction breakdown, and actor metadata; uses LinkedIn-Version 202509 and X-Restli-Protocol-Version 2.0.0."
+    description = "Retrieves reactions for one or more LinkedIn activity URNs using the REST reactions endpoint. Returns per-post totals, reaction breakdown, and actor metadata; sends the configured `apiVersion` as the LinkedIn-Version header (default 202509) and X-Restli-Protocol-Version 2.0.0."
 )
 @Plugin(
     examples = {
@@ -67,6 +67,7 @@ public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTa
     @Override
     public Output run(RunContext runContext) throws Exception {
         List<String> rActivityUrns = runContext.render(this.activityUrns).asList(String.class);
+        String rApiVersion = runContext.render(this.apiVersion).as(String.class).orElse("202509");
         List<PostReactionsData> results = new ArrayList<>();
 
         try (HttpClient httpClient = createLinkedinHttpRequestFactory(runContext)) {
@@ -80,7 +81,7 @@ public class GetPostAnalytics extends AbstractLinkedinTask implements RunnableTa
                     HttpRequest request = HttpRequest.builder()
                         .uri(URI.create(finalUrl))
                         .method("GET")
-                        .addHeader("LinkedIn-Version", "202509")
+                        .addHeader("LinkedIn-Version", rApiVersion)
                         .addHeader("X-Restli-Protocol-Version", "2.0.0")
                         .build();
                     HttpResponse<String> response = httpClient.request(request, String.class);

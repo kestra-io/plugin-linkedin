@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.plugin.linkedin.stubs.LinkedInReactionsStubController;
 
 import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Inject;
@@ -28,6 +29,7 @@ class GetPostAnalyticsTest {
     void ensureServer() {
         if (!server.isRunning())
             server.start();
+        LinkedInReactionsStubController.reset();
     }
 
     @Test
@@ -66,5 +68,36 @@ class GetPostAnalyticsTest {
         assertThat(r1.getRootUrn(), equalTo(activityUrn));
         assertThat(r1.getCreatedTime(), equalTo(1700000000000L));
         assertThat(r1.getLastModifiedTime(), equalTo(1700000005000L));
+        assertThat(LinkedInReactionsStubController.lastLinkedinVersion(), equalTo("202509"));
+    }
+
+    @Test
+    void shouldSendConfiguredApiVersionHeader() throws Exception {
+        GetPostAnalytics task = GetPostAnalytics.builder()
+            .accessToken(Property.ofValue("test-access-token"))
+            .apiBaseUrl(Property.ofValue(server.getURI().toString()))
+            .apiVersion(Property.ofValue("202601"))
+            .activityUrns(Property.ofValue(List.of("urn:li:activity:123456789")))
+            .build();
+
+        var out = task.run(runContextFactory.of(Map.of()));
+
+        assertThat(out.getTotalPosts(), equalTo(1));
+        assertThat(LinkedInReactionsStubController.lastLinkedinVersion(), equalTo("202601"));
+    }
+
+    @Test
+    void shouldRenderApiVersionExpression() throws Exception {
+        GetPostAnalytics task = GetPostAnalytics.builder()
+            .accessToken(Property.ofValue("test-access-token"))
+            .apiBaseUrl(Property.ofValue(server.getURI().toString()))
+            .apiVersion(Property.ofExpression("{{ linkedinVersion }}"))
+            .activityUrns(Property.ofValue(List.of("urn:li:activity:123456789")))
+            .build();
+
+        var out = task.run(runContextFactory.of(Map.of("linkedinVersion", "202510")));
+
+        assertThat(out.getTotalPosts(), equalTo(1));
+        assertThat(LinkedInReactionsStubController.lastLinkedinVersion(), equalTo("202510"));
     }
 }

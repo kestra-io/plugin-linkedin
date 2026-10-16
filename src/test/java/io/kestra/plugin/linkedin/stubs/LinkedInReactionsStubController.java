@@ -2,6 +2,7 @@ package io.kestra.plugin.linkedin.stubs;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.*;
@@ -9,10 +10,23 @@ import io.micronaut.http.annotation.*;
 
 @Controller
 public class LinkedInReactionsStubController {
+    private static final AtomicReference<String> LAST_LINKEDIN_VERSION = new AtomicReference<>();
+
+    public static String lastLinkedinVersion() {
+        return LAST_LINKEDIN_VERSION.get();
+    }
+
+    public static void reset() {
+        LAST_LINKEDIN_VERSION.set(null);
+    }
+
     @Get("/reactions/{path:.*}")
     public HttpResponse<String> reactions(
         @PathVariable String path,
-        @QueryValue @Nullable String q) {
+        @QueryValue @Nullable String q,
+        @Header("LinkedIn-Version") @Nullable String linkedinVersion) {
+        LAST_LINKEDIN_VERSION.set(linkedinVersion);
+
         if (!path.startsWith("(entity:") || !"entity".equals(q)) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
