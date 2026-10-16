@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.plugin.linkedin.stubs.LinkedInReactionsStubController;
 
 import io.micronaut.runtime.server.EmbeddedServer;
 import jakarta.inject.Inject;
@@ -38,12 +39,14 @@ class GetPostAnalyticsTest {
         GetPostAnalytics task = GetPostAnalytics.builder()
             .accessToken(Property.ofValue("test-access-token"))
             .apiBaseUrl(Property.ofValue(baseUrl))
+            .apiVersion(Property.ofValue("202601"))
             .activityUrns(Property.ofValue(List.of(activityUrn)))
             .build();
 
         var runContext = runContextFactory.of(Map.of());
         var out = task.run(runContext);
 
+        assertThat(LinkedInReactionsStubController.lastLinkedinVersion, equalTo("202601"));
         assertThat(out.getTotalPosts(), equalTo(1));
         assertThat(out.getTotalReactions(), equalTo(2));
         assertThat(out.getPosts(), hasSize(1));

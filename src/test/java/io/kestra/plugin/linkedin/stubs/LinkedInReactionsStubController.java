@@ -9,10 +9,14 @@ import io.micronaut.http.annotation.*;
 
 @Controller
 public class LinkedInReactionsStubController {
+    public static volatile String lastLinkedinVersion;
+
     @Get("/reactions/{path:.*}")
     public HttpResponse<String> reactions(
         @PathVariable String path,
-        @QueryValue @Nullable String q) {
+        @QueryValue @Nullable String q,
+        @Header("LinkedIn-Version") @Nullable String linkedinVersion) {
+        lastLinkedinVersion = linkedinVersion;
         if (!path.startsWith("(entity:") || !"entity".equals(q)) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
